@@ -46,6 +46,7 @@ struct TS_RFX_BLOCKT
 {
     [[nodiscard]] bool Compose(OStream & s) const;
     [[nodiscard]] bool Decompose(IStream & s);
+    [[nodiscard]] bool Decompose(IStream & s) const;
 
     uint16_t blockType;
     uint32_t blockLen;
@@ -129,7 +130,7 @@ struct TS_RFX_RECT
 struct TS_RFX_SYNC
 {
     [[nodiscard]] bool Compose(OStream & s) const;
-    [[nodiscard]] bool Decompose(IStream & s);
+    [[nodiscard]] bool Decompose(IStream & s) const;
 
     const TS_RFX_BLOCKT BlockT {TS_RFX_BLOCK_TYPE::WBT_SYNC,12};
     const uint32_t magic {WF_MAGIC}; /* Must be WF_MAGIC(0xCACCACCA) */
@@ -140,7 +141,7 @@ struct TS_RFX_SYNC
 struct TS_RFX_CODEC_VERSIONS
 {
     [[nodiscard]] bool Compose(OStream & s) const;
-    [[nodiscard]] bool Decompose(IStream & s);
+    [[nodiscard]] bool Decompose(IStream & s) const;
 
     const TS_RFX_BLOCKT BlockT {TS_RFX_BLOCK_TYPE::WBT_CODEC_VERSIONS, 10};
     const uint8_t numCodecs {0x01};
@@ -160,7 +161,7 @@ struct TS_RFX_CHANNELS
 
     TS_RFX_BLOCKT BlockT {TS_RFX_BLOCK_TYPE::WBT_CHANNELS, 0};
     uint8_t numChannels;
-    std::span<TS_RFX_CHANNELT> Channels;
+    std::vector<TS_RFX_CHANNELT> Channels;
 };
 
 struct TS_RFX_CONTEXT_PROPERTIES
@@ -168,12 +169,12 @@ struct TS_RFX_CONTEXT_PROPERTIES
     [[nodiscard]] bool Compose(OStream & s) const;
     [[nodiscard]] bool Decompose(IStream & s);
 
-    uint8_t flags:3;
-    const uint8_t cct:2 {COL_CONV_ICT};
-    const uint8_t xft:4 {CLW_XFORM_DWT_53_A};
-    uint8_t et:4;
-    uint8_t qt:2 {SCALAR_QUANTIZATION};
-    uint8_t r:1;
+    uint8_t flags;
+    const uint8_t cct {COL_CONV_ICT};
+    const uint8_t xft {CLW_XFORM_DWT_53_A};
+    uint8_t et;
+    const uint8_t qt {SCALAR_QUANTIZATION};
+    uint8_t r;
 };
 
 /*
@@ -235,12 +236,12 @@ struct TS_RFX_TILESET_PROPERTIES
 {
     [[nodiscard]] bool Compose(OStream & s) const;
     [[nodiscard]] bool Decompose(IStream & s);
-    uint8_t A:1 {true};
-    uint8_t flags:3;
-    uint8_t cct:2 {COL_CONV_ICT};
-    uint8_t xft:4 {CLW_XFORM_DWT_53_A};
-    uint8_t et:4;
-    uint8_t qt:2 {SCALAR_QUANTIZATION};
+    const uint8_t A {0x01};
+    uint8_t flags;
+    const uint8_t cct {COL_CONV_ICT};
+    const uint8_t xft {CLW_XFORM_DWT_53_A};
+    uint8_t et;
+    const uint8_t qt {SCALAR_QUANTIZATION};
 };
 
 /*
@@ -264,7 +265,6 @@ struct TS_RFX_TILE
     std::vector<uint8_t> YData;
     std::vector<uint8_t> CbData;
     std::vector<uint8_t> CrData;
-    std::vector<uint8_t> YCbCrData;
 };
 
 /*
