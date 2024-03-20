@@ -3,13 +3,14 @@ add_library(rfx
         Rfx.h
         RfxMessage.cpp
         RfxMessage.h
-        DWT.cpp
-        DWT.h
+        Dwt.cpp
+        Dwt.h
         Quantization.cpp
         Quantization.h
-        RLGR.cpp
-        RLGR.h)
+        Rlgr.cpp
+        Rlgr.h Tile.h Tile.cpp Linearization.cpp Linearization.h)
 
 target_include_directories(rfx PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(rfx PUBLIC utils)
+target_link_libraries(rfx PUBLIC bmp)

@@ -40,7 +40,7 @@ enum CLW_ENTROPY_RLGR
 };
 
 /*
- * The TS_RFX_BLOCKT structure identifies the type of encode message and specifies the size of the message.
+ * The TS_RFX_BLOCKT structure identifies the type of encodeTile message and specifies the size of the message.
  * */
 struct TS_RFX_BLOCKT
 {
@@ -92,7 +92,7 @@ struct TS_RFX_CODEC_VERSIONT
 
 /*
  * The TS_RFX_CODEC_QUANT structure holds the scalar quantization values for the ten sub-bands in the 3-level
- * DWT decomposition. Each field in this structure MUST have a value in the range of 6 to 15.
+ * Dwt decomposition. Each field in this structure MUST have a value in the range of 6 to 15.
  * */
 struct TS_RFX_CODEC_QUANT
 {
@@ -290,19 +290,18 @@ struct TS_RFX_TILESET
 class RfxMessage
 {
 public:
-    explicit RfxMessage(IStream & s)
-        :m_stream(s)
+    explicit RfxMessage(uint32_t frameIdx)
+        :frameIdx(frameIdx)
     {
 
     }
 public:
-    void Compose();
-    void Decompose();
+    void Compose(OStream & s);
+    void Decompose(IStream & s);
 private:
 
 
 private:
-    IStream m_stream;
     uint32_t frameIdx;
 
     /**

@@ -4,11 +4,19 @@
 
 #ifndef RFXCPP_BMP_H
 #define RFXCPP_BMP_H
-
+#include <span>
+#include <cstdint>
+#include <vector>
 
 class bmp
 {
-
+public:
+    [[nodiscard]] std::span<const uint32_t> GetRGBData() const
+    {
+        return m_rgbDate;
+    }
+private:
+    std::vector<uint32_t> m_rgbDate;
 };
 
 

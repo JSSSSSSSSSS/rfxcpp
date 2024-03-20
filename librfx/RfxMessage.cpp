@@ -757,8 +757,8 @@ bool TS_RFX_TILESET::Decompose(IStream &s)
         return false;
     }
 
-    s.Read(subtype);
-    s.Read(idx);
+    s.Skip(subtype);
+    s.Skip(idx);
 
     if (!properties.Decompose(s))
     {
@@ -795,10 +795,10 @@ bool TS_RFX_TILESET::Decompose(IStream &s)
     return true;
 }
 
-void RfxMessage::Compose() {
+void RfxMessage::Compose(OStream & s) {
 
 }
 
-void RfxMessage::Decompose() {
+void RfxMessage::Decompose(IStream & s) {
 
 }
