@@ -46,6 +46,18 @@ public:
             down[i] = this->at(i + half_size);
         }
     }
+
+    T getByPos(size_t x, size_t y) const
+    {
+        size_t index = y * width + x;
+        return this->at(index);
+    }
+
+    void setByPos(T value, size_t x, size_t y)
+    {
+        size_t index = y * width + x;
+        this->at(index) = value;
+    }
 };
 
 

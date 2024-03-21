@@ -21,7 +21,7 @@ Rfx::~Rfx()
 
 }
 
-bool Rfx::Encode(std::span<uint8_t> &out, const bmp &in, uint32_t frameIndex)
+bool Rfx::encode(std::vector<uint8_t> &out, const Bitmap &in, uint32_t frameIndex)
 {
     std::vector<Tile_rgb> tiles;
     SplitTiles(tiles, in.GetRGBData());
@@ -34,7 +34,7 @@ bool Rfx::Encode(std::span<uint8_t> &out, const bmp &in, uint32_t frameIndex)
         m_quantization->Encode(dwtDecomposedTile, {});
 
         TileYCbCr t_yCbCr{};
-        linearization_->Encode(t_yCbCr, dwtDecomposedTile);
+        linearization_->encode(t_yCbCr, dwtDecomposedTile);
 
         TileYCbCr t_yCbCr_rlgr{};
         m_rlgr->Encode(t_yCbCr_rlgr, t_yCbCr);
@@ -50,7 +50,7 @@ bool Rfx::Encode(std::span<uint8_t> &out, const bmp &in, uint32_t frameIndex)
     return true;
 }
 
-bool Rfx::Decode(bmp &out, const std::span<uint8_t> &in, uint32_t &frameIndex)
+bool Rfx::Decode(Bitmap &out, const std::span<uint8_t> &in, uint32_t &frameIndex)
 {
     return false;
 }

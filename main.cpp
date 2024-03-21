@@ -1,16 +1,17 @@
 #include <iostream>
 
-#include <span>
-#include <vector>
-#include <ranges>
+#include <Rfx.h>
+#include <Bitmap.h>
 
 int main()
 {
-    std::array<int8_t, 64*64> array{};
-    for(int i = 0; i < 64 *64; ++i)
-    {
-        array[i] = i;
-    }
+    Bitmap bmp("test.Bitmap");
+    Rfx rfx(bmp.getWidth(), bmp.getHeight(), 32);
+
+    std::vector<uint8_t> encodedData;
+    rfx.encode(encodedData, bmp, 0);
+
+    std::cout << encodedData.size() << std::endl;
 
     return 0;
 }

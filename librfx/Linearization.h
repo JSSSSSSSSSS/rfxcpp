@@ -9,7 +9,7 @@
 class Linearization
 {
 public:
-    void Encode(TileYCbCr & output, const DwtDecomposedTile & input);
+    void encode(TileYCbCr & output, const DwtDecomposedTile & input);
     void Decode(Tile_dwt & output, const std::vector<uint32_t>& quantization_values);
 };
 

@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <bmp.h>
+#include <Bitmap.h>
 
 #include "Tile.h"
 #include "Linearization.h"
@@ -27,8 +27,8 @@ public:
     Rfx(uint32_t width, uint32_t height, uint32_t bpp);
     ~Rfx();
 public:
-    bool Encode(std::span<uint8_t> & out, const bmp & in, uint32_t frameIndex);
-    bool Decode(bmp & out, const std::span<uint8_t> & in, uint32_t &frameIndex);
+    bool encode(std::vector<uint8_t> & out, const Bitmap & in, uint32_t frameIndex);
+    bool Decode(Bitmap & out, const std::span<uint8_t> & in, uint32_t &frameIndex);
 private:
     void SplitTiles(std::vector<Tile_rgb> & tiles, const std::span<const uint32_t>& rgb_data) const;
 

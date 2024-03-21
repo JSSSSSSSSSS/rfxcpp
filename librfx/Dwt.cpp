@@ -49,13 +49,3 @@ void Dwt::encodePlane(DwtSubBands & output, const DwtTileData & input)
     output.HH3 = level_3_horizontal.HH;
     output.LL3 = level_3_horizontal.LL;
 }
-
-void Dwt::filterCoefficientsHighPass(std::span<coefficient_type> out, const std::span<const coefficient_type> &in)
-{
-
-}
-
-void Dwt::filterCoefficientsLowPass(std::span<coefficient_type> out, const std::span<const coefficient_type> &in)
-{
-
-}

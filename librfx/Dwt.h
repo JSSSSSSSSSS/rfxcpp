@@ -36,31 +36,91 @@ private:
     template<uint32_t Size>
     void encode2DVertical(DwtVertical<Size> & out, const RectArray<coefficient_type ,2 * Size, 2 * Size> & in)
     {
-        DwtVertical<Size> tmp;
-        in.horizontalBisect(tmp.L, tmp.H);
+        auto & [L, H] = out;
 
-        filterCoefficientsHighPass(out.H, tmp.H);
-        filterCoefficientsLowPass(out.L, tmp.L);
+        // vertical filtering, for each col, generator two sub-bands.
+        constexpr size_t width = 2 * Size;
+        for(int x = 0; x < width; ++x)
+        {
+            // left boundary
+            coefficient_type h = (in.getByPos(x,1) - ((in.getByPos(x, 0) + in.getByPos(x, 2)) >> 1 )) >> 1;
+            coefficient_type l = in.getByPos(x, 0) + h;
+            H.setByPos(h, x, 0);
+            L.setByPos(l, x, 0);
+
+            int n = 1;
+            int y = n << 1;
+            for(n = 1; n < Size - 1; ++n)
+            {
+                y = n << 1;
+                h = (in.getByPos(x, y + 1) - ((in.getByPos(x, y) + in.getByPos(x, y + 2)) >> 1))
+                        >> 1;
+                H.setByPos(h, x, n);
+                l = in.getByPos(x, y) + ((H.getByPos(x, n - 1) + H.getByPos(x, n)) >> 1);
+                L.setByPos(l, x, n);
+            }
+
+            // right boundary
+            y = n << 1;
+            h = (in.getByPos(x, y + 1) - ((in.getByPos(x, y) + in.getByPos(x, y)) >> 1)) >> 1;
+            H.setByPos(h, x, n);
+            l = in.getByPos(x, 0) + ((H.getByPos(x, n - 1) + H.getByPos(x, n)) >> 1);
+            L.setByPos(l, x, n);
+        }
     }
 
     template<uint32_t Size>
     void encode2DHorizontal(DwtHorizontal<Size> & out, const DwtVertical<Size> & in)
     {
-        DwtHorizontal<Size> tmp;
-        in.L.verticalBisect(tmp.LL, tmp.HL);
-        in.H.verticalBisect(tmp.LH, tmp.HH);
+        auto & [LL, HL, LH, HH] = out;
+        auto & [L, H] = in;
 
-        filterCoefficientsHighPass(out.HL, tmp.HL);
-        filterCoefficientsLowPass(out.LL, tmp.LL);
-        filterCoefficientsHighPass(out.HH, tmp.HH);
-        filterCoefficientsLowPass(out.LH, tmp.LH);
+        // Horizontal filtering, for each row, generate two sub-bands.
+        // There are two sub-bands input, generate four sub-bands.
+        for(int y = 0; y < Size; ++y)
+        {
+            // left boundary, n = 0
+            coefficient_type hl = (L.getByPos(1, y) - ((L.getByPos(0, y) + L.getByPos(2, y)) >> 1)) >> 1;
+            coefficient_type ll = L.getByPos(0, y) + hl;
+            HL.setByPos(hl, 0, y);
+            LL.setByPos(ll, 0, y);
+            coefficient_type hh = (H.getByPos(1, y) - ((H.getByPos(0, y) + H.getByPos(2, y)) >> 1)) >> 1;;
+            coefficient_type lh = H.getByPos(0, y) + hh;
+            HH.setByPos(hh, 0, y);
+            LH.setByPos(lh, 0, y);
+
+            int x = 0;
+            int n = 1;
+            for(n = 1; n < Size - 1; ++n)
+            {
+                x = n << 1;
+                hl = (L.getByPos(x + 1, y) - ((L.getByPos(x, y) + L.getByPos(x + 2,y)) >> 1))
+                        >> 1;
+                HL.setByPos(hl, n, y);
+                ll = L.getByPos(x, y) + ((HL.getByPos(n - 1, y) + HL.getByPos(n, y)) >> 1);
+                LL.setByPos(ll, n, y);
+
+                hh = (H.getByPos(x + 1, y) - ((H.getByPos(x, y) + H.getByPos(x + 2,y)) >> 1))
+                        >> 1;
+                HH.setByPos(hh, n, y);
+                lh = H.getByPos(x, y) + ((HH.getByPos(n - 1, y) + HH.getByPos(n, y)) >> 1);
+                LH.setByPos(lh, n, y);
+            }
+
+            // right boundary, n = Size - 1
+            x = n << 1;
+            hl = (L.getByPos(x + 1, y) - ((L.getByPos(x, y) + L.getByPos(x, y)) >> 1)) >> 1;
+            HL.setByPos(hl, n, y);
+            ll = L.getByPos(x, y) + ((HL.getByPos(n - 1, y) + HL.getByPos(n, y)) >> 1);
+            LL.setByPos(ll, n, y);
+
+            hh = (H.getByPos(x + 1, y) - ((H.getByPos(x, y) + H.getByPos(x, y)) >> 1)) >> 1;
+            HH.setByPos(hh, n, y);
+            lh = H.getByPos(x, y) + ((HH.getByPos(n - 1, y) + HH.getByPos(n, y)) >> 1);
+            LH.setByPos(lh, n, y);
+        }
     }
 
-    void filterCoefficientsHighPass(std::span<coefficient_type> out, const std::span<const coefficient_type> & in);
-    void filterCoefficientsLowPass(std::span<coefficient_type> out, const std::span<const coefficient_type> & in);
-
-    void inverseFilterCoefficientsEven(std::span<coefficient_type> & out, const std::span<coefficient_type> & in);
-    void inverseFilterCoefficientsOdd(std::span<coefficient_type> & out, const std::span<coefficient_type> & in);
 };
 
 
