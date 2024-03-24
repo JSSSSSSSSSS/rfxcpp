@@ -7,6 +7,9 @@
 
 #include <cstdint>
 #include <array>
+#include <span>
+#include <cassert>
+#include <stdexcept>
 
 struct ViewRect
 {
@@ -23,6 +26,9 @@ class RectArray:public std::array<T, width * height>
     static_assert(height > 0 && height % 2 == 0, "Template parameter <height> must > 0 and be an even number");
     static constexpr size_t half_width = width / 2;
     static constexpr size_t half_height = height / 2;
+public:
+    using size_type = size_t;
+
 public:
     void verticalBisect(RectArray<T, half_width, height> & left, RectArray<T, half_width, height> & right) const
     {
@@ -47,16 +53,50 @@ public:
         }
     }
 
+    template<typename InputIterator,
+            typename = std::_RequireInputIter<InputIterator>>
+    void assign(size_t index, InputIterator first, InputIterator last)
+    {
+        assert(index + (last - first) <= this->size());
+        for(auto it = first; it != last; ++it, ++index)
+        {
+            try
+            {
+                this->at(index) = *it;
+            }
+            catch(std::out_of_range & e)
+            {
+                e.what();
+            }
+        }
+    }
+
     T getByPos(size_t x, size_t y) const
     {
         size_t index = y * width + x;
-        return this->at(index);
+        T value;
+        try
+        {
+            value = this->at(index);
+        }
+        catch(std::out_of_range & e)
+        {
+            e.what();
+        }
+        return value;
     }
 
     void setByPos(T value, size_t x, size_t y)
     {
         size_t index = y * width + x;
-        this->at(index) = value;
+        try
+        {
+            this->at(index) = value;
+        }
+        catch(std::out_of_range & e)
+        {
+            e.what();
+        }
     }
 };
 

@@ -6,29 +6,29 @@
 
 bool TS_RFX_BLOCKT::Compose(OStream & s) const
 {
-    if (!s.EnsureRemain(6))
+    if (!s.ensureRemain(6))
     {
         return false;
     }
-    s.Write(blockType);
-    s.Write(blockLen);
+    s.write(blockType);
+    s.write(blockLen);
     return true;
 }
 
 bool TS_RFX_BLOCKT::Decompose(IStream & s)
 {
-    if (!s.EnsureRemain(6))
+    if (!s.ensureRemain(6))
     {
         return false;
     }
-    s.Read(blockType);
-    s.Read(blockLen);
+    s.read(blockType);
+    s.read(blockLen);
     return true;
 }
 
 bool TS_RFX_BLOCKT::Decompose(IStream &s) const
 {
-    if (!s.EnsureRemain(6))
+    if (!s.ensureRemain(6))
     {
         return false;
     }
@@ -36,8 +36,8 @@ bool TS_RFX_BLOCKT::Decompose(IStream &s) const
     uint16_t blockType_tmp;
     uint32_t blockLen_tmp;
 
-    s.Read(blockType_tmp);
-    s.Read(blockLen_tmp);
+    s.read(blockType_tmp);
+    s.read(blockLen_tmp);
 
     if (blockLen_tmp != blockType || blockLen_tmp != blockLen)
     {
@@ -49,68 +49,68 @@ bool TS_RFX_BLOCKT::Decompose(IStream &s) const
 
 bool TS_RFX_CODEC_CHANNELT::Compose(OStream &s) const
 {
-    if (!s.EnsureRemain(8))
+    if (!s.ensureRemain(8))
     {
         return false;
     }
 
-    s.Write(blockType);
-    s.Write(blockLen);
-    s.Write(codecId);
-    s.Write(channelId);
+    s.write(blockType);
+    s.write(blockLen);
+    s.write(codecId);
+    s.write(channelId);
 
     return true;
 }
 
 bool TS_RFX_CODEC_CHANNELT::Decompose(IStream &s)
 {
-    if (!s.EnsureRemain(2))
+    if (!s.ensureRemain(2))
     {
         return false;
     }
 
-    s.Read(blockType);
-    s.Read(blockLen);
-    s.Read(codecId);
-    s.Read(channelId);
+    s.read(blockType);
+    s.read(blockLen);
+    s.read(codecId);
+    s.read(channelId);
     return true;
 }
 
 bool TS_RFX_CHANNELT::Compose(OStream &s) const
 {
-    if (!s.EnsureRemain(5))
+    if (!s.ensureRemain(5))
     {
         return false;
     }
 
-    s.Write(channelId);
-    s.Write(width);
-    s.Write(height);
+    s.write(channelId);
+    s.write(width);
+    s.write(height);
 
     return true;
 }
 
 bool TS_RFX_CHANNELT::Decompose(IStream &s)
 {
-    if (!s.EnsureRemain(5))
+    if (!s.ensureRemain(5))
     {
         return false;
     }
-    s.Read(channelId);
-    s.Read(width);
-    s.Read(height);
+    s.read(channelId);
+    s.read(width);
+    s.read(height);
     return true;
 }
 
 bool TS_RFX_CODEC_VERSIONT::Compose(OStream &s) const
 {
-    if(!s.EnsureRemain(3))
+    if(!s.ensureRemain(3))
     {
         return false;
     }
 
-    s.Write(codecId);
-    s.Write(version);
+    s.write(codecId);
+    s.write(version);
     return true;
 }
 
@@ -118,13 +118,13 @@ bool TS_RFX_CODEC_VERSIONT::Decompose(IStream &s) const
 {
     uint8_t codecId_tmp;
     uint16_t version_tmp;
-    if (!s.EnsureRemain(3))
+    if (!s.ensureRemain(3))
     {
         return false;
     }
 
-    s.Read(codecId_tmp);
-    s.Read(version_tmp);
+    s.read(codecId_tmp);
+    s.read(version_tmp);
 
     if (codecId_tmp != codecId || version_tmp != version)
     {
@@ -136,26 +136,26 @@ bool TS_RFX_CODEC_VERSIONT::Decompose(IStream &s) const
 
 bool TS_RFX_CODEC_QUANT::Compose(OStream &s) const
 {
-    if (!s.EnsureRemain(5))
+    if (!s.ensureRemain(5))
     {
         return false;
     }
 
-    s.Write(*this);
+    s.write(*this);
 
     return true;
 }
 
 bool TS_RFX_CODEC_QUANT::Decompose(IStream &s)
 {
-    if (!s.EnsureRemain(5))
+    if (!s.ensureRemain(5))
     {
         return false;
     }
 
     uint8_t vals[5];
 
-    s.Read(vals);
+    s.read(vals);
 
     LL3 = vals[0] >> 4 & 0x0F;
     LH3 = vals[0] & 0x0F;
@@ -173,30 +173,30 @@ bool TS_RFX_CODEC_QUANT::Decompose(IStream &s)
 
 bool TS_RFX_RECT::Compose(OStream &s) const
 {
-    if (!s.EnsureRemain(8))
+    if (!s.ensureRemain(8))
     {
         return false;
     }
 
-    s.Write(x);
-    s.Write(y);
-    s.Write(width);
-    s.Write(height);
+    s.write(x);
+    s.write(y);
+    s.write(width);
+    s.write(height);
 
     return true;
 }
 
 bool TS_RFX_RECT::Decompose(IStream &s)
 {
-    if (!s.EnsureRemain(8))
+    if (!s.ensureRemain(8))
     {
         return false;
     }
 
-    s.Read(x);
-    s.Read(y);
-    s.Read(width);
-    s.Read(height);
+    s.read(x);
+    s.read(y);
+    s.read(width);
+    s.read(height);
 
     return true;
 }
@@ -208,13 +208,13 @@ bool TS_RFX_SYNC::Compose(OStream &s) const
         return false;
     }
 
-    if (!s.EnsureRemain(6))
+    if (!s.ensureRemain(6))
     {
         return false;
     }
 
-    s.Write(magic);
-    s.Write(version);
+    s.write(magic);
+    s.write(version);
 
     return true;
 }
@@ -226,7 +226,7 @@ bool TS_RFX_SYNC::Decompose(IStream &s) const
         return false;
     }
 
-    if (!s.EnsureRemain(6))
+    if (!s.ensureRemain(6))
     {
         return false;
     }
@@ -234,8 +234,8 @@ bool TS_RFX_SYNC::Decompose(IStream &s) const
     uint32_t magic_tmp;
     uint16_t version_tmp;
 
-    s.Read(magic_tmp); /* Must be WF_MAGIC(0xCACCACCA) */
-    s.Read(version_tmp); /* Must be WF_VERSION_1_0(0x0100) */
+    s.read(magic_tmp); /* Must be WF_MAGIC(0xCACCACCA) */
+    s.read(version_tmp); /* Must be WF_VERSION_1_0(0x0100) */
 
     if (magic_tmp != magic || version_tmp != version)
     {
@@ -252,7 +252,7 @@ bool TS_RFX_CODEC_VERSIONS::Compose(OStream &s) const
         return false;
     }
 
-    if (!s.EnsureRemain(1))
+    if (!s.ensureRemain(1))
     {
         return  false;
     }
@@ -272,13 +272,13 @@ bool TS_RFX_CODEC_VERSIONS::Decompose(IStream &s) const
         return false;
     }
 
-    if (!s.EnsureRemain(1))
+    if (!s.ensureRemain(1))
     {
         return false;
     }
 
     uint8_t numCodecs_tmp;
-    s.Read(numCodecs_tmp);
+    s.read(numCodecs_tmp);
 
     if (numCodecs_tmp != numCodecs)
     {
@@ -300,11 +300,11 @@ bool TS_RFX_CHANNELS::Compose(OStream &s) const
         return false;
     }
 
-    if (!s.EnsureRemain(1))
+    if (!s.ensureRemain(1))
     {
         return false;
     }
-    s.Write(numChannels);
+    s.write(numChannels);
 
     for(auto channel:Channels)
     {
@@ -324,12 +324,12 @@ bool TS_RFX_CHANNELS::Decompose(IStream &s)
         return false;
     }
 
-    if (!s.EnsureRemain(1))
+    if (!s.ensureRemain(1))
     {
         return false;
     }
 
-    s.Read(numChannels);
+    s.read(numChannels);
 
     for(int i = 0; i < numChannels; ++i)
     {
@@ -346,7 +346,7 @@ bool TS_RFX_CHANNELS::Decompose(IStream &s)
 
 bool TS_RFX_CONTEXT_PROPERTIES::Compose(OStream &s) const
 {
-    if (!s.EnsureRemain(2))
+    if (!s.ensureRemain(2))
     {
         return false;
     }
@@ -358,20 +358,20 @@ bool TS_RFX_CONTEXT_PROPERTIES::Compose(OStream &s) const
     properties |= ((et << 9) & 0x1E00);
     properties |= ((qt << 13) & 0x6000);
 
-    s.Write(properties);
+    s.write(properties);
 
     return true;
 }
 
 bool TS_RFX_CONTEXT_PROPERTIES::Decompose(IStream &s)
 {
-    if (!s.EnsureRemain(2))
+    if (!s.ensureRemain(2))
     {
         return false;
     }
 
     uint16_t  properties {0};
-    s.Read(properties);
+    s.read(properties);
 
     flags = properties & 0x0007;
     et = (properties & 0x1E00) >> 9;
@@ -386,13 +386,13 @@ bool TS_RFX_CONTEXT::Compose(OStream &s) const
         return false;
     }
 
-    if (!s.EnsureRemain(3))
+    if (!s.ensureRemain(3))
     {
         return false;
     }
 
-    s.Write(ctxId);
-    s.Write(tileSize);
+    s.write(ctxId);
+    s.write(tileSize);
 
     if(!properties.Compose(s))
     {
@@ -409,7 +409,7 @@ bool TS_RFX_CONTEXT::Decompose(IStream &s)
         return false;
     }
 
-    if (!s.EnsureRemain(3))
+    if (!s.ensureRemain(3))
     {
         return false;
     }
@@ -417,8 +417,8 @@ bool TS_RFX_CONTEXT::Decompose(IStream &s)
     uint8_t ctxId_tmp;
     uint16_t tileSize_tmp;
 
-    s.Read(ctxId_tmp);
-    s.Read(tileSize_tmp);
+    s.read(ctxId_tmp);
+    s.read(tileSize_tmp);
 
     if (ctxId_tmp != ctxId || tileSize_tmp != tileSize)
     {
@@ -440,13 +440,13 @@ bool TS_RFX_FRAME_BEGIN::Compose(OStream &s) const
         return false;
     }
 
-    if (!s.EnsureRemain(6))
+    if (!s.ensureRemain(6))
     {
         return false;
     }
 
-    s.Write(frameIdx);
-    s.Write(numRegions);
+    s.write(frameIdx);
+    s.write(numRegions);
 
     return true;
 }
@@ -458,13 +458,13 @@ bool TS_RFX_FRAME_BEGIN::Decompose(IStream &s)
         return false;
     }
 
-    if (!s.EnsureRemain(6))
+    if (!s.ensureRemain(6))
     {
         return false;
     }
 
-    s.Read(frameIdx);
-    s.Read(numRegions);
+    s.read(frameIdx);
+    s.read(numRegions);
 
     return true;
 }
@@ -496,13 +496,13 @@ bool TS_RFX_REGION::Compose(OStream &s) const
         return false;
     }
 
-    if (!s.EnsureRemain(3))
+    if (!s.ensureRemain(3))
     {
         return false;
     }
 
-    s.Write(regionFlags);
-    s.Write(numRects);
+    s.write(regionFlags);
+    s.write(numRects);
 
     for(auto rect:rects)
     {
@@ -512,13 +512,13 @@ bool TS_RFX_REGION::Compose(OStream &s) const
         }
     }
 
-    if (!s.EnsureRemain(4))
+    if (!s.ensureRemain(4))
     {
         return false;
     }
 
-    s.Write(regionType);
-    s.Write(numTilesets);
+    s.write(regionType);
+    s.write(numTilesets);
 
     return true;
 }
@@ -530,13 +530,13 @@ bool TS_RFX_REGION::Decompose(IStream &s)
         return false;
     }
 
-    if (!s.EnsureRemain(3))
+    if (!s.ensureRemain(3))
     {
         return false;
     }
 
-    s.Read(regionFlags);
-    s.Read(numRects);
+    s.read(regionFlags);
+    s.read(numRects);
 
     rects.clear();
     for(int i = 0; i < numRects; ++i)
@@ -549,7 +549,7 @@ bool TS_RFX_REGION::Decompose(IStream &s)
         rects.push_back(rect);
     }
 
-    if (!s.EnsureRemain(4))
+    if (!s.ensureRemain(4))
     {
         return false;
     }
@@ -557,8 +557,8 @@ bool TS_RFX_REGION::Decompose(IStream &s)
     uint16_t regionType_tmp;
     uint16_t numTilesets_tmp;
 
-    s.Read(regionType_tmp);
-    s.Read(numTilesets_tmp);
+    s.read(regionType_tmp);
+    s.read(numTilesets_tmp);
 
     if (regionType_tmp != regionType || numTilesets_tmp != numTilesets)
     {
@@ -570,7 +570,7 @@ bool TS_RFX_REGION::Decompose(IStream &s)
 
 bool TS_RFX_TILESET_PROPERTIES::Compose(OStream &s) const
 {
-    if (!s.EnsureRemain(2))
+    if (!s.ensureRemain(2))
     {
         return false;
     }
@@ -583,20 +583,20 @@ bool TS_RFX_TILESET_PROPERTIES::Compose(OStream &s) const
     properties |= ((et << 10) & 0x3C00);
     properties |= ((qt << 14) & 0xC000);
 
-    s.Write(properties);
+    s.write(properties);
 
     return true;
 }
 
 bool TS_RFX_TILESET_PROPERTIES::Decompose(IStream &s)
 {
-    if (!s.EnsureRemain(2))
+    if (!s.ensureRemain(2))
     {
         return false;
     }
 
     uint16_t  properties {0};
-    s.Read(properties);
+    s.read(properties);
 
     flags = (properties & 0x000E) >> 1;
     et = (properties & 0x3C00) >> 10;
@@ -611,38 +611,38 @@ bool TS_RFX_TILE::Compose(OStream &s) const
         return false;
     }
 
-    if (!s.EnsureRemain(13))
+    if (!s.ensureRemain(13))
     {
         return false;
     }
 
-    s.Write(quantIdxY);
-    s.Write(quantIdxCb);
-    s.Write(quantIdxCr);
-    s.Write(xIdx);
-    s.Write(yIdx);
-    s.Write(YLen);
-    s.Write(CbLen);
-    s.Write(CrLen);
+    s.write(quantIdxY);
+    s.write(quantIdxCb);
+    s.write(quantIdxCr);
+    s.write(xIdx);
+    s.write(yIdx);
+    s.write(YLen);
+    s.write(CbLen);
+    s.write(CrLen);
 
-    if (!s.EnsureRemain(YLen + CbLen + CrLen))
+    if (!s.ensureRemain(YLen + CbLen + CrLen))
     {
         return false;
     }
 
     for(auto y:YData)
     {
-        s.Write(y);
+        s.write(y);
     }
 
     for(auto cb:CbData)
     {
-        s.Write(cb);
+        s.write(cb);
     }
 
     for(auto cr:CrData)
     {
-        s.Write(cr);
+        s.write(cr);
     }
 
     return true;
@@ -655,21 +655,21 @@ bool TS_RFX_TILE::Decompose(IStream &s)
         return false;
     }
 
-    if (!s.EnsureRemain(13))
+    if (!s.ensureRemain(13))
     {
         return false;
     }
 
-    s.Read(quantIdxY);
-    s.Read(quantIdxCb);
-    s.Read(quantIdxCr);
-    s.Read(xIdx);
-    s.Read(yIdx);
-    s.Read(YLen);
-    s.Read(CbLen);
-    s.Read(CrLen);
+    s.read(quantIdxY);
+    s.read(quantIdxCb);
+    s.read(quantIdxCr);
+    s.read(xIdx);
+    s.read(yIdx);
+    s.read(YLen);
+    s.read(CbLen);
+    s.read(CrLen);
 
-    if (!s.EnsureRemain(YLen + CbLen + CrLen))
+    if (!s.ensureRemain(YLen + CbLen + CrLen))
     {
         return false;
     }
@@ -678,7 +678,7 @@ bool TS_RFX_TILE::Decompose(IStream &s)
     for(int i = 0; i < YLen;++i)
     {
         uint8_t y;
-        s.Read(y);
+        s.read(y);
         YData.push_back(y);
     }
 
@@ -686,7 +686,7 @@ bool TS_RFX_TILE::Decompose(IStream &s)
     for(int i = 0; i < CbLen;++i)
     {
         uint8_t cb;
-        s.Read(cb);
+        s.read(cb);
         CbData.push_back(cb);
     }
 
@@ -694,7 +694,7 @@ bool TS_RFX_TILE::Decompose(IStream &s)
     for(int i = 0; i < CrLen;++i)
     {
         uint8_t cr;
-        s.Read(cr);
+        s.read(cr);
         YData.push_back(cr);
     }
 
@@ -708,23 +708,23 @@ bool TS_RFX_TILESET::Compose(OStream &s) const
         return false;
     }
 
-    if (!s.EnsureRemain(14))
+    if (!s.ensureRemain(14))
     {
         return false;
     }
 
-    s.Write(subtype);
-    s.Write(idx);
+    s.write(subtype);
+    s.write(idx);
 
     if (!properties.Compose(s))
     {
         return false;
     }
 
-    s.Write(numQuant);
-    s.Write(tileSize);
-    s.Write(numTiles);
-    s.Write(tilesDataSize);
+    s.write(numQuant);
+    s.write(tileSize);
+    s.write(numTiles);
+    s.write(tilesDataSize);
 
     for(auto vals:quantVals)
     {
@@ -752,23 +752,23 @@ bool TS_RFX_TILESET::Decompose(IStream &s)
         return false;
     }
 
-    if (!s.EnsureRemain(14))
+    if (!s.ensureRemain(14))
     {
         return false;
     }
 
-    s.Skip(subtype);
-    s.Skip(idx);
+    s.skip(subtype);
+    s.skip(idx);
 
     if (!properties.Decompose(s))
     {
         return false;
     }
 
-    s.Read(numQuant);
-    s.Read(tileSize);
-    s.Read(numTiles);
-    s.Read(tilesDataSize);
+    s.read(numQuant);
+    s.read(tileSize);
+    s.read(numTiles);
+    s.read(tilesDataSize);
 
     quantVals.clear();
     for(int i = 0; i < numQuant; ++i)

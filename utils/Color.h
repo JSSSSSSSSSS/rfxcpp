@@ -17,27 +17,27 @@ struct ColorYUV
 struct ColorRGB
 {
     explicit ColorRGB(uint32_t rgb)
-    :m_rgb(rgb)
+    : rgb_(rgb)
     {
     }
 
     [[nodiscard]] uint8_t r() const
     {
-        return (m_rgb >> 16) & 0xFF;
+        return (rgb_ >> 16) & 0xFF;
     }
 
     [[nodiscard]] uint8_t g() const
     {
-        return (m_rgb >> 8) & 0xFF;
+        return (rgb_ >> 8) & 0xFF;
     }
 
     [[nodiscard]] uint8_t b() const
     {
-        return (m_rgb) & 0xFF;
+        return (rgb_) & 0xFF;
     }
 
 private:
-    uint32_t m_rgb;
+    uint32_t rgb_;
 };
 
 class Color

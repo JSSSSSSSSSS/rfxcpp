@@ -21,9 +21,9 @@ struct Tile_rgb
     uint16_t yIdx;
     uint16_t width;
     uint16_t height;
-    RgbTileData m_r_data;
-    RgbTileData m_g_data;
-    RgbTileData m_b_data;
+    RgbTileData r_data;
+    RgbTileData g_data;
+    RgbTileData b_data;
 };
 
 using DwtTileData = RectArray<int16_t, tile_width, tile_height>;
@@ -32,20 +32,19 @@ struct Tile_dwt
     uint32_t num;
     uint16_t width;
     uint16_t height;
-    DwtTileData m_y_data;
-    DwtTileData m_cb_data;
-    DwtTileData m_cr_data;
+    DwtTileData y_data;
+    DwtTileData cb_data;
+    DwtTileData cr_data;
 };
 
-using YCbCrTileData = RectArray<int8_t, tile_width, tile_height>;
+using YCbCrTileData = std::vector<uint8_t>;
 struct TileYCbCr
 {
-    uint32_t num;
-    uint16_t width;
-    uint16_t height;
-    YCbCrTileData m_y_data;
-    YCbCrTileData m_cb_data;
-    YCbCrTileData m_cr_data;
+    uint16_t xIdx;
+    uint16_t yIdx;
+    YCbCrTileData y_data;
+    YCbCrTileData cb_data;
+    YCbCrTileData cr_data;
 };
 
 struct DwtSubBands

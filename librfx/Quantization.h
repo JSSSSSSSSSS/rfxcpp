@@ -9,8 +9,13 @@
 class Quantization
 {
 public:
-    void Encode(DwtDecomposedTile & output, const std::vector<uint32_t> & quantization_values);
-    void Decode(Tile_dwt & output, const std::vector<uint32_t>& quantization_values);
+    void encode(DwtDecomposedTile & output, std::span<const int> quantization_values);
+    void decode(DwtDecomposedTile & output, std::span<const int> quantization_values);
+private:
+    static void encodeSubBands(DwtSubBands & sub_bands, std::span<const int> quantization_values);
+    static void decodeSubBands(DwtSubBands & sub_bands, std::span<const int> quantization_values);
+    static void divideAndRound(int16_t & value, int factor);
+    static void multipleAndRound(int16_t & value, int factor);
 };
 
 

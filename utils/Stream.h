@@ -9,134 +9,140 @@
 #include <cstring>
 #include <span>
 #include <cstdint>
+#include <utility>
+#include <vector>
+#include <concepts>
 
-class Stream
+class IStream
 {
 public:
-    explicit Stream(const std::span<uint8_t> &in)
-        : m_data(in), m_iter(in.begin())
+    explicit IStream(std::span<const uint8_t> in)
+        :data_(in), iter_(data_.begin())
     {
-    }
-
-    ~Stream() = default;
-public:
-    [[nodiscard]] bool EnsureRemain(size_t size) const
-    {
-        return m_iter + (long long)size <= m_data.end();
-    }
-
-    [[nodiscard]] bool Eof() const
-    {
-        return m_iter == m_data.end();
-    }
-
-    [[nodiscard]]std::span<uint8_t> RawData() const
-    {
-        return m_data;
-    }
-
-    [[nodiscard]] virtual size_t SizeBytes() const
-    {
-        return m_data.size_bytes();
-    }
-
-protected:
-    const std::span<uint8_t> m_data;
-    std::span<uint8_t>::iterator m_iter;
-};
-
-class IStream:public Stream
-{
-public:
-    explicit IStream(const std::span<uint8_t> &in)
-            : Stream(in)
-    {
+        iter_ = data_.begin();
     }
 
     ~IStream() = default;
 public:
     template<typename T>
-    size_t Skip(T & v)
+    size_t skip(T & v)
     {
         constexpr size_t valueSize = sizeof(T);
 
-        if (EnsureRemain(valueSize))
+        if (ensureRemain(valueSize))
         {
             return 0;
         }
 
-        m_iter += valueSize;
+        iter_ += valueSize;
         return valueSize;
     }
 
     template<typename T>
-    size_t Peek(T & v, bool is_remove = false)
+    size_t peek(T & v, bool is_remove = false)
     {
         constexpr size_t valueSize = sizeof(T);
-        if (EnsureRemain(valueSize))
+        if (ensureRemain(valueSize))
         {
             // no enough data
             return 0;
         }
 
-        memcpy(&v, &(*m_iter), valueSize);
+        memcpy(&v, &(*iter_), valueSize);
         if (is_remove)
         {
-            m_iter += valueSize;
+            iter_ += valueSize;
         }
         return valueSize;
     }
 
     template<typename T>
-    size_t Read(T & v)
+    size_t read(T & v)
     {
         constexpr size_t valueSize = sizeof(T);
-        if (EnsureRemain(valueSize))
+        if (!ensureRemain(valueSize))
         {
             // no enough data
             return 0;
         }
 
-        memcpy(&v, &(*m_iter), valueSize);
-        m_iter += valueSize;
+        memcpy(&v, &(*iter_), valueSize);
+        iter_ += valueSize;
         return valueSize;
     }
+
+    template<std::output_iterator<uint8_t> Out>
+    size_t read(Out v, size_t n)
+    {
+        for(int i = 0; i < n; ++i)
+        {
+            *v = *iter_;
+            ++v;
+            ++iter_;
+        }
+        return n;
+    }
+
+    [[nodiscard]] bool ensureRemain(size_t size) const
+    {
+        return data_.end() - iter_ >= size;
+    }
+
+    [[nodiscard]] size_t remain() const
+    {
+        return data_.end() - iter_;
+    }
+
+    [[nodiscard]] size_t size() const
+    {
+        return data_.size();
+    }
+
+    [[nodiscard]] bool eof() const
+    {
+        return iter_ == data_.end();
+    }
+private:
+    std::span<const uint8_t> data_;
+    std::span<const uint8_t>::iterator iter_;
 };
 
-class OStream:public Stream
+class OStream
 {
 public:
-    explicit OStream(const std::span<uint8_t> &in)
-            : Stream(in)
+    explicit OStream(size_t init_size)
     {
+        data_.resize(init_size);
+        iter_ = data_.begin();
     }
 
     ~OStream() = default;
 public:
     template<typename T>
-    size_t FillWith(const T & v, size_t nums)
+    size_t fillWith(const T & v, size_t nums)
     {
         constexpr size_t valueSize = sizeof(T);
 
         for(size_t i = 0; i < nums; ++i)
         {
-            memcpy(&(*m_iter), &v, valueSize);
-            m_iter += (long long)valueSize;
+            memcpy(&(*iter_), &v, valueSize);
+            iter_ += (long long)valueSize;
         }
         return valueSize * nums;
     }
 
     template<typename T>
-    size_t Write(const T & v)
+    size_t write(const T & v)
     {
         constexpr size_t valueSize = sizeof(T);
 
-        memcpy(&(*m_iter), &v, valueSize);
-        m_iter += (long long)valueSize;
+        memcpy(&(*iter_), &v, valueSize);
+        iter_ += (long long)valueSize;
+
         return valueSize;
     }
 
-    size_t Write(const char* & v)
+    size_t write(const char* & v)
     {
         if (!v)
         {
@@ -144,16 +150,43 @@ public:
         }
 
         size_t valueSize = strlen(v);
+        iter_ = data_.insert(iter_, v, v + valueSize);
+        iter_+= static_cast<long long>(valueSize);
 
-        memcpy(&(*m_iter), &v, valueSize);
-        m_iter += (long long)valueSize;
         return valueSize;
     }
 
-    [[nodiscard]] size_t SizeBytes() const override
+    template<std::ranges::sized_range RNG>
+    size_t write(const RNG & v) requires std::is_same_v<uint8_t, std::ranges::range_value_t<RNG>>
     {
-        return m_iter - m_data.begin();
+        size_t size = v.size();
+        iter_ = data_.insert(iter_, v.begin(), v.end());
+        iter_+= static_cast<long long>(size);
+        return size;
     }
+
+    [[nodiscard]] size_t size() const
+    {
+        return iter_ - data_.begin();
+    }
+
+    [[nodiscard]] bool ensureRemain(size_t size)
+    {
+        if (iter_ + (long long)size >= data_.end())
+        {
+            data_.resize(data_.size() + size);
+        }
+        return true;
+    }
+
+    [[nodiscard]]std::span<const uint8_t> data() const
+    {
+        std::span<const uint8_t> data_raw(data_);
+        return data_raw.subspan(0, size());
+    }
+private:
+    std::vector<uint8_t> data_;
+    std::vector<uint8_t>::iterator iter_;
 };
 
 #endif //NET_BYTESTREAM_H

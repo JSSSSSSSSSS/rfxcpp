@@ -12,11 +12,17 @@
 class Bitmap
 {
 public:
-    explicit Bitmap(const std::string & filename);
+    explicit Bitmap();
+    Bitmap(std::span<const uint32_t> rgbData, uint32_t width, uint32_t height, uint32_t format, uint32_t bpp);
 
-    [[nodiscard]] std::span<const uint32_t> GetRGBData() const
+    bool load(const std::string & filename);
+    bool dump(const std::string & filename);
+
+    void setRgbDate(std::span<const uint32_t> rgbData, uint32_t width, uint32_t height, uint32_t format, uint32_t bpp);
+
+    [[nodiscard]] std::span<const uint32_t> getRgbData() const
     {
-        return m_rgbDate;
+        return rgb_data_;
     }
 
     [[nodiscard]] uint32_t getWidth() const
@@ -28,11 +34,17 @@ public:
     {
         return height_;
     }
+
+    [[nodiscard]] uint32_t getBytesPerPixel() const
+    {
+        return bytes_per_pixel_;
+    }
 private:
-    std::vector<uint32_t> m_rgbDate;
+    std::vector<uint32_t> rgb_data_;
     uint32_t width_;
     uint32_t height_;
     uint32_t format_;
+    uint32_t bytes_per_pixel_;
 };
 
 

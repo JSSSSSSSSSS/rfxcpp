@@ -9,8 +9,13 @@
 class Linearization
 {
 public:
-    void encode(TileYCbCr & output, const DwtDecomposedTile & input);
-    void Decode(Tile_dwt & output, const std::vector<uint32_t>& quantization_values);
+    static void encode(Tile_dwt & output, const DwtDecomposedTile & input);
+    static void decode(DwtDecomposedTile & output, const Tile_dwt & input);
+private:
+    static void encodePlane(DwtTileData & plane, const DwtSubBands & sub_bands);
+    static void decodePlane(DwtSubBands & plane, const DwtTileData & sub_bands);
+    static void encodeDifferential(std::span<int16_t> coefficients, std::span<const int16_t> input);
+    static void decodeDifferential(std::span<int16_t> coefficients, std::span<const int16_t> input);
 };
 
 
