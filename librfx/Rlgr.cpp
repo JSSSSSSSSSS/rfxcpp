@@ -5,7 +5,7 @@
 #include "Rlgr.h"
 #include "BitStream.h"
 
-void Rlgr::encode(TileYCbCr &output, const Tile_dwt &input)
+void Rlgr::encode(std::vector<uint8_t> & output, std::span<const int16_t> input)
 {
     switch(mod_)
     {
@@ -20,7 +20,7 @@ void Rlgr::encode(TileYCbCr &output, const Tile_dwt &input)
     }
 }
 
-void Rlgr::decode(Tile_dwt &output, const TileYCbCr &input)
+void Rlgr::decode(std::vector<int16_t> & output, std::span<const uint8_t> input)
 {
     switch(mod_)
     {
@@ -35,21 +35,6 @@ void Rlgr::decode(Tile_dwt &output, const TileYCbCr &input)
     }
 }
 
-void Rlgr::encodeRlgr1(TileYCbCr &output, const Tile_dwt &input_tile)
-{
-    encodePlaneRlgr1(output.y_data, input_tile.y_data);
-    encodePlaneRlgr1(output.cb_data, input_tile.cb_data);
-    encodePlaneRlgr1(output.cr_data, input_tile.cr_data);
-}
-
-void Rlgr::encodeRlgr3(TileYCbCr &output, const Tile_dwt &input)
-{
-    encodePlaneRlgr3(output.y_data, input.y_data);
-    encodePlaneRlgr3(output.cb_data, input.cb_data);
-    encodePlaneRlgr3(output.cr_data, input.cr_data);
-}
-
-
 struct RFX_BITSTREAM
 {
     uint8_t *buffer;
@@ -58,33 +43,38 @@ struct RFX_BITSTREAM
     int bits_left;
 };
 
-#define rfx_bitstream_attach(bs, _buffer, _nbytes) do { \
-    (bs).buffer = (uint8_t *) (_buffer); \
-    (bs).nbytes = (_nbytes); \
-    (bs).byte_pos = 0; \
-    (bs).bits_left = 8; } while (0)
+void rfx_bitstream_attach(RFX_BITSTREAM & bs, uint8_t * buffer, int nbytes)
+{
+    bs.buffer = buffer;
+    bs.nbytes = nbytes;
+    bs.byte_pos = 0;
+    bs.bits_left = 8;
+}
 
-#define rfx_bitstream_put_bits(bs, _bits, _nbits) do { \
-    uint16_t bits = (_bits); \
-    int nbits = (_nbits); \
-    int b; \
-    while ((bs).byte_pos < (bs).nbytes && nbits > 0) \
-    { \
-        b = nbits; \
-        if (b > (bs).bits_left) \
-            b = (bs).bits_left; \
-        (bs).buffer[(bs).byte_pos] &= ~(((1 << b) - 1) << ((bs).bits_left - b)); \
-        (bs).buffer[(bs).byte_pos] |= ((bits >> (nbits - b)) & ((1 << b) - 1)) << ((bs).bits_left - b); \
-        (bs).bits_left -= b; \
-        nbits -= b; \
-        if ((bs).bits_left == 0) \
-        { \
-            (bs).bits_left = 8; \
-            (bs).byte_pos++; \
-        } \
-    } } while (0)
+void rfx_bitstream_put_bits(RFX_BITSTREAM & bs, uint16_t bits, int nbits)
+{
+    int b;
+    while (bs.byte_pos < bs.nbytes && nbits > 0)
+    {
+        b = nbits;
+        if (b > bs.bits_left)
+            b = bs.bits_left;
+        bs.buffer[bs.byte_pos] &= ~(((1 << b) - 1) << (bs.bits_left - b));
+        bs.buffer[bs.byte_pos] |= ((bits >> (nbits - b)) & ((1 << b) - 1)) << (bs.bits_left - b);
+        bs.bits_left -= b;
+        nbits -= b;
+        if (bs.bits_left == 0)
+        {
+            bs.bits_left = 8;
+            bs.byte_pos++;
+        }
+    }
+}
 
-#define rfx_bitstream_get_processed_bytes(_bs) ((_bs).bits_left < 8 ? (_bs).byte_pos + 1 : (_bs).byte_pos)
+int rfx_bitstream_get_processed_bytes(RFX_BITSTREAM & bs)
+{
+    return (bs.bits_left > 0 ? bs.byte_pos + 1 : bs.byte_pos);
+}
 
 /* Constants used within the RLGR1/RLGR3 algorithm */
 static constexpr int KPMAX = 80;  /* max value for kp or krp */
@@ -98,19 +88,19 @@ static constexpr int DQ_GR = 3;   /* decrease in kp after zero symbol in GR mode
  * Update the passed parameter and clamp it to the range [0, KPMAX]
  * Return the value of parameter right-shifted by LSGR
  */
-#define UpdateParam(_param, _deltaP, _k) \
-do { \
-    (_param) += (_deltaP); \
-    if ((_param) > KPMAX) \
-    { \
-        (_param) = KPMAX; \
-    } \
-    if ((_param) < 0) \
-    { \
-        (_param) = 0; \
-    } \
-    (_k) = ((_param) >> LSGR); \
-} while (0)
+void UpdateParam(int & param, int _deltaP, int & k)
+{
+    param += _deltaP;
+    if (param > KPMAX)
+    {
+        param = KPMAX;
+    }
+    if (param < 0)
+    {
+        param = 0;
+    }
+    k = (param >> LSGR);
+}
 
 /* Returns the next coefficient (a signed int) to encode, from the input stream */
 #define GetNextInput(_n) \
@@ -168,7 +158,7 @@ do { \
     } \
 } while (0)
 
-void Rlgr::encodePlaneRlgr1(std::vector<uint8_t> & output, std::span<const int16_t> input_plane)
+void Rlgr::encodeRlgr1(std::vector<uint8_t> & output, std::span<const int16_t> input_plane)
 {
     int k;
     int kp;
@@ -269,23 +259,6 @@ void Rlgr::encodePlaneRlgr1(std::vector<uint8_t> & output, std::span<const int16
     output.resize(rfx_bitstream_get_processed_bytes(bs));
 }
 
-void Rlgr::encodePlaneRlgr3(std::vector<uint8_t> & output, std::span<const int16_t> input_plane)
-{
-
-}
-
-void Rlgr::decodeRlgr1(Tile_dwt &output, const TileYCbCr &input)
-{
-    decodePlaneRlgr1(output.y_data, input.y_data);
-    decodePlaneRlgr1(output.cb_data, input.cb_data);
-    decodePlaneRlgr1(output.cr_data, input.cr_data);
-}
-
-void Rlgr::decodeRlgr3(Tile_dwt &output, const TileYCbCr &input)
-{
-
-}
-
 /* Returns the least number of bits required to represent a given value */
 #define GetMinBits(_val, _nbits) \
 	do                           \
@@ -346,7 +319,7 @@ static inline uint32_t lzcnt_s(uint32_t x)
     return __lzcnt(x);
 }
 
-void Rlgr::decodePlaneRlgr1(DwtTileData &output, std::span<const uint8_t> input_plane)
+void Rlgr::decodeRlgr1(std::vector<int16_t> & output, std::span<const uint8_t> input)
 {
     int vk = 0;
     size_t run = 0;
@@ -379,7 +352,7 @@ void Rlgr::decodePlaneRlgr1(DwtTileData &output, std::span<const uint8_t> input_
 
     bs = &s_bs;
 
-    BitStream_Attach(bs, input_plane.data(), input_plane.size());
+    BitStream_Attach(bs, input.data(), input.size());
     BitStream_Fetch(bs);
 
     while ((BitStream_GetRemainingLength(bs) > 0) && ((pOutput - output.data()) < DstSize))
@@ -689,5 +662,15 @@ void Rlgr::decodePlaneRlgr1(DwtTileData &output, std::span<const uint8_t> input_
     }
 
     offset = (pOutput - output.data());
+}
+
+void Rlgr::encodeRlgr3(std::vector<uint8_t> &output, std::span<const int16_t> input)
+{
+
+}
+
+void Rlgr::decodeRlgr3(std::vector<int16_t> & output, std::span<const uint8_t> input)
+{
+
 }
 

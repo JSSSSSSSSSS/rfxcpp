@@ -41,7 +41,9 @@ bool Rfx::encode(std::vector<uint8_t> &out, const Bitmap &in, uint32_t frameInde
         linearization_codec_->encode(t_dwt, dwtDecomposedTile);
 
         TileYCbCr t_yCbCr_rlgr{};
-        rlgr_codec_->encode(t_yCbCr_rlgr, t_dwt);
+        rlgr_codec_->encode(t_yCbCr_rlgr.y_data, t_dwt.y_data);
+        rlgr_codec_->encode(t_yCbCr_rlgr.cb_data, t_dwt.cb_data);
+        rlgr_codec_->encode(t_yCbCr_rlgr.cr_data, t_dwt.cr_data);
 
         t_yCbCr_rlgr.xIdx = t.xIdx;
         t_yCbCr_rlgr.yIdx = t.yIdx;
@@ -62,7 +64,14 @@ bool Rfx::decode(Bitmap &out, const std::span<uint8_t> &in, uint32_t &frameIndex
     for(auto & t: tiles_ycbcr)
     {
         Tile_dwt t_dwt{};
-        rlgr_codec_->decode(t_dwt, t);
+        std::vector<int16_t> decoded_data;
+        decoded_data.resize(tile_size);
+        rlgr_codec_->decode(decoded_data, t.y_data);
+        t_dwt.y_data.assign(0, decoded_data.begin(), decoded_data.end());
+        rlgr_codec_->decode(decoded_data, t.cb_data);
+        t_dwt.cb_data.assign(0, decoded_data.begin(), decoded_data.end());
+        rlgr_codec_->decode(decoded_data, t.cr_data);
+        t_dwt.cr_data.assign(0, decoded_data.begin(), decoded_data.end());
 
         DwtDecomposedTile t_decomposed{};
         linearization_codec_->decode(t_decomposed, t_dwt);

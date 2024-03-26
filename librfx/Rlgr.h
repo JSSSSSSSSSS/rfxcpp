@@ -19,16 +19,13 @@ public:
     : mod_(mod)
     {}
 public:
-    void encode(TileYCbCr & output, const Tile_dwt & input);
-    void decode(Tile_dwt & output, const TileYCbCr & input);
+    void encode(std::vector<uint8_t> & output, std::span<const int16_t> input);
+    void decode(std::vector<int16_t> & output, std::span<const uint8_t> input);
 private:
-    void encodeRlgr1(TileYCbCr & output, const Tile_dwt & input);
-    void decodeRlgr1(Tile_dwt & output, const TileYCbCr & input);
-    void encodeRlgr3(TileYCbCr & output, const Tile_dwt & input);
-    void decodeRlgr3(Tile_dwt & output, const TileYCbCr & input);
-    static void encodePlaneRlgr1(std::vector<uint8_t> & output, std::span<const int16_t> input_plane);
-    static void decodePlaneRlgr1(DwtTileData & output, std::span<const uint8_t> input_plane);
-    void encodePlaneRlgr3(std::vector<uint8_t> & output, std::span<const int16_t> input_plane);
+    static void encodeRlgr1(std::vector<uint8_t> & output, std::span<const int16_t> input);
+    static void encodeRlgr3(std::vector<uint8_t> & output, std::span<const int16_t> input);
+    static void decodeRlgr1(std::vector<int16_t> & output, std::span<const uint8_t> input);
+    static void decodeRlgr3(std::vector<int16_t> & output, std::span<const uint8_t> input);
 private:
     RLGR_MODE mod_;
 };
