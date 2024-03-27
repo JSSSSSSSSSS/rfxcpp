@@ -23,7 +23,7 @@ int main()
     {
         if (test_r_data[i] != decoded_data[i])
         {
-            std::cout << "error decode!" << std::endl;
+            std::cout << "error decode! at index " << i << std::endl;
             break;
         }
     }

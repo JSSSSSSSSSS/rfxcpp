@@ -35,46 +35,49 @@ void Rlgr::decode(std::vector<int16_t> & output, std::span<const uint8_t> input)
     }
 }
 
-struct RFX_BITSTREAM
+class BitStream
 {
-    uint8_t *buffer;
-    int nbytes;
-    int byte_pos;
-    int bits_left;
-};
-
-void rfx_bitstream_attach(RFX_BITSTREAM & bs, uint8_t * buffer, int nbytes)
-{
-    bs.buffer = buffer;
-    bs.nbytes = nbytes;
-    bs.byte_pos = 0;
-    bs.bits_left = 8;
-}
-
-void rfx_bitstream_put_bits(RFX_BITSTREAM & bs, uint16_t bits, int nbits)
-{
-    int b;
-    while (bs.byte_pos < bs.nbytes && nbits > 0)
+public:
+    explicit BitStream(std::span<uint8_t> data)
     {
-        b = nbits;
-        if (b > bs.bits_left)
-            b = bs.bits_left;
-        bs.buffer[bs.byte_pos] &= ~(((1 << b) - 1) << (bs.bits_left - b));
-        bs.buffer[bs.byte_pos] |= ((bits >> (nbits - b)) & ((1 << b) - 1)) << (bs.bits_left - b);
-        bs.bits_left -= b;
-        nbits -= b;
-        if (bs.bits_left == 0)
+        buffer_ = data.data();
+        bytes_ = data.size();
+        byte_pos_ = 0;
+        bits_left_ = 8;
+    }
+
+    [[nodiscard]] size_t getProcessedBytes() const
+    {
+        return (bits_left_ > 0 ? byte_pos_ + 1 : byte_pos_);
+    }
+
+    void putBits(int bits, int size)
+    {
+        int b;
+        while (byte_pos_ < bytes_ && size > 0)
         {
-            bs.bits_left = 8;
-            bs.byte_pos++;
+            b = std::min(size, bits_left_);
+
+            // Why this ?
+            buffer_[byte_pos_] &= ~(((1 << b) - 1) << (bits_left_ - b));
+            buffer_[byte_pos_] |= ((bits >> (size - b)) & ((1 << b) - 1)) << (bits_left_ - b);
+
+            bits_left_ -= b;
+            size -= b;
+
+            if (bits_left_ == 0)
+            {
+                bits_left_ = 8;
+                byte_pos_++;
+            }
         }
     }
-}
-
-int rfx_bitstream_get_processed_bytes(RFX_BITSTREAM & bs)
-{
-    return (bs.bits_left > 0 ? bs.byte_pos + 1 : bs.byte_pos);
-}
+private:
+    uint8_t *buffer_{};
+    size_t bytes_{};
+    int byte_pos_{};
+    int bits_left_{};
+};
 
 /* Constants used within the RLGR1/RLGR3 algorithm */
 static constexpr int KPMAX = 80;  /* max value for kp or krp */
@@ -91,32 +94,26 @@ static constexpr int DQ_GR = 3;   /* decrease in kp after zero symbol in GR mode
 void UpdateParam(int & param, int _deltaP, int & k)
 {
     param += _deltaP;
-    if (param > KPMAX)
-    {
-        param = KPMAX;
-    }
-    if (param < 0)
-    {
-        param = 0;
-    }
+    param = std::min(param, KPMAX);
+    param = std::max(param, 0);
     k = (param >> LSGR);
 }
 
 /* Returns the next coefficient (a signed int) to encode, from the input stream */
-#define GetNextInput(_n) \
-do { \
-    if (input_iter != input_iter_end) \
-    { \
-        (_n) = *input_iter++; \
-    } \
-    else \
-    { \
-        (_n) = 0; \
-    } \
-} while (0)
+template<std::input_iterator It, std::sized_sentinel_for<It> End>
+int GetNextInput(It & input_iter, End input_iter_end)
+{
+    int n = 0;
+    if (input_iter != input_iter_end)
+    {
+        n = *input_iter++;
+    }
+
+    return n;
+}
 
 /* Emit bitPattern to the output bitstream */
-#define OutputBits(_numBits, _bitPattern) rfx_bitstream_put_bits(bs, _bitPattern, _numBits)
+#define OutputBits(_numBits, _bitPattern) bs.putBits(_bitPattern, _numBits)
 
 /* Emit a bit (0 or 1), count number of times, to the output bitstream */
 #define OutputBit(_count, _bit) \
@@ -126,7 +123,7 @@ do \
     int c = _count; \
     for (; c > 0; c -= 16) \
     { \
-        rfx_bitstream_put_bits(bs, b, (c > 16 ? 16 : c)); \
+        bs.putBits(b, (c > 16 ? 16 : c)); \
     } \
 } while (0)
 
@@ -170,14 +167,11 @@ void Rlgr::encodeRlgr1(std::vector<uint8_t> & output, std::span<const int16_t> i
     int mag;
     int sign;
     int lmag;
-
-    RFX_BITSTREAM bs{};
-
     uint32_t twoMs;
 
     output.resize(tile_size * 2);
+    BitStream bs{output};
 
-    rfx_bitstream_attach(bs, output.data(), output.size());
     auto input_iter = input_plane.begin();
     auto input_iter_end = input_plane.end();
 
@@ -195,11 +189,11 @@ void Rlgr::encodeRlgr1(std::vector<uint8_t> & output, std::span<const int16_t> i
 
             /* collect the run of zeros in the input stream */
             numZeros = 0;
-            GetNextInput(input);
+            input = GetNextInput(input_iter, input_iter_end);
             while (input == 0 && input_iter < input_iter_end)
             {
                 numZeros++;
-                GetNextInput(input);
+                input = GetNextInput(input_iter, input_iter_end);
             }
 
             /* emit output zeros */
@@ -238,7 +232,7 @@ void Rlgr::encodeRlgr1(std::vector<uint8_t> & output, std::span<const int16_t> i
             /* RLGR1 variant */
 
             /* convert input to (2*magnitude - sign), encode using GR code */
-            GetNextInput(input);
+            input = GetNextInput(input_iter, input_iter_end);
             twoMs = Get2MagSign(input);
             CodeGR(krp, twoMs);
 
@@ -256,23 +250,10 @@ void Rlgr::encodeRlgr1(std::vector<uint8_t> & output, std::span<const int16_t> i
         }
     }
 
-    output.resize(rfx_bitstream_get_processed_bytes(bs));
+    output.resize(bs.getProcessedBytes());
 }
 
-/* Returns the least number of bits required to represent a given value */
-#define GetMinBits(_val, _nbits) \
-	do                           \
-	{                            \
-		uint32_t _v = _val;        \
-		_nbits = 0;              \
-		while (_v)               \
-		{                        \
-			_v >>= 1;            \
-			_nbits++;            \
-		}                        \
-	} while (0)
-
-static inline uint32_t __lzcnt(uint32_t x)
+static inline uint32_t lzcnt(uint32_t x)
 {
     unsigned y;
     int n = 32;
@@ -306,17 +287,12 @@ static inline uint32_t __lzcnt(uint32_t x)
     return n - x;
 }
 
-static inline uint16_t __lzcnt16(uint16_t x)
-{
-    return ((uint16_t)__lzcnt((uint32_t)x));
-}
-
 static inline uint32_t lzcnt_s(uint32_t x)
 {
     if (!x)
         return 32;
     
-    return __lzcnt(x);
+    return lzcnt(x);
 }
 
 void Rlgr::decodeRlgr1(std::vector<int16_t> & output, std::span<const uint8_t> input)
@@ -340,14 +316,18 @@ void Rlgr::decodeRlgr1(std::vector<int16_t> & output, std::span<const uint8_t> i
     int16_t * pOutput = nullptr;
     wBitStream* bs = nullptr;
     wBitStream s_bs = { nullptr };
-    const size_t DstSize = 64 * 64;
-
+    
     k = 1;
     kp = k << LSGR;
 
     kr = 1;
     krp = kr << LSGR;
-
+    
+    output.resize(tile_size);
+    const size_t DstSize = tile_size;
+    const size_t rDstSize = tile_size;
+    
+    int16_t * pDstData = output.data();
     pOutput = output.data();
 
     bs = &s_bs;
@@ -355,7 +335,7 @@ void Rlgr::decodeRlgr1(std::vector<int16_t> & output, std::span<const uint8_t> i
     BitStream_Attach(bs, input.data(), input.size());
     BitStream_Fetch(bs);
 
-    while ((BitStream_GetRemainingLength(bs) > 0) && ((pOutput - output.data()) < DstSize))
+    while ((BitStream_GetRemainingLength(bs) > 0) && ((pOutput - pDstData) < DstSize))
     {
         if (k)
         {
@@ -516,10 +496,10 @@ void Rlgr::decodeRlgr1(std::vector<int16_t> & output, std::span<const uint8_t> i
 
             /* write to output stream */
 
-            offset = (pOutput - output.data());
+            offset = (pOutput - pDstData);
             size = run;
 
-            if ((offset + size) > 64 * 64)
+            if ((offset + size) > rDstSize)
                 size = DstSize - offset;
 
             if (size)
@@ -528,7 +508,7 @@ void Rlgr::decodeRlgr1(std::vector<int16_t> & output, std::span<const uint8_t> i
                 pOutput += size;
             }
 
-            if ((pOutput - output.data()) < DstSize)
+            if ((pOutput - pDstData) < DstSize)
             {
                 *pOutput = mag;
                 pOutput++;
@@ -608,7 +588,7 @@ void Rlgr::decodeRlgr1(std::vector<int16_t> & output, std::span<const uint8_t> i
 
                 kr = krp >> LSGR;
             }
-            
+
             if (!code)
             {
                 /* update k, kp params */
@@ -644,7 +624,7 @@ void Rlgr::decodeRlgr1(std::vector<int16_t> & output, std::span<const uint8_t> i
                     mag = (int16_t)(code >> 1);
             }
 
-            if ((pOutput - output.data()) < DstSize)
+            if ((pOutput - pDstData) < DstSize)
             {
                 *pOutput = mag;
                 pOutput++;
@@ -652,16 +632,19 @@ void Rlgr::decodeRlgr1(std::vector<int16_t> & output, std::span<const uint8_t> i
         }
     }
 
-    offset = (pOutput - output.data());
+    offset = (pOutput - pDstData);
 
-    if (offset < 64 * 64)
+    if (offset < rDstSize)
     {
         size = DstSize - offset;
         memset(pOutput, 0, size * 2);
         pOutput += size;
     }
 
-    offset = (pOutput - output.data());
+    offset = (pOutput - pDstData);
+
+    if (offset != DstSize)
+        throw std::exception();
 }
 
 void Rlgr::encodeRlgr3(std::vector<uint8_t> &output, std::span<const int16_t> input)
