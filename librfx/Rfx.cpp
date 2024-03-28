@@ -28,17 +28,26 @@ Rfx::~Rfx()
 bool Rfx::encode(std::vector<uint8_t> &out, const Bitmap &in, uint32_t frameIndex)
 {
     std::vector<Tile_rgb> tiles;
-    SplitTiles(tiles, in.getRgbData());
+    splitTiles(tiles, in.getRgbData());
     std::vector<TileYCbCr> tiles_ycbcr;
 
     for(auto &t: tiles)
     {
         DwtDecomposedTile dwtDecomposedTile{};
-        dwt_codec_->encodeTile(dwtDecomposedTile, t);
-        quantization_codec_->encode(dwtDecomposedTile, {});
-
         Tile_dwt t_dwt{};
-        linearization_codec_->encode(t_dwt, dwtDecomposedTile);
+        tileRgbToDwt(t_dwt, t);
+
+        dwt_codec_->encode(dwtDecomposedTile.y, t_dwt.y_data);
+        dwt_codec_->encode(dwtDecomposedTile.cb, t_dwt.cb_data);
+        dwt_codec_->encode(dwtDecomposedTile.cr, t_dwt.cr_data);
+
+        quantization_codec_->encode(dwtDecomposedTile.y, {});
+        quantization_codec_->encode(dwtDecomposedTile.cb, {});
+        quantization_codec_->encode(dwtDecomposedTile.cr, {});
+
+        linearization_codec_->encode(t_dwt.y_data, dwtDecomposedTile.y);
+        linearization_codec_->encode(t_dwt.cb_data, dwtDecomposedTile.cb);
+        linearization_codec_->encode(t_dwt.cr_data, dwtDecomposedTile.cr);
 
         TileYCbCr t_yCbCr_rlgr{};
         rlgr_codec_->encode(t_yCbCr_rlgr.y_data, t_dwt.y_data);
@@ -74,11 +83,21 @@ bool Rfx::decode(Bitmap &out, const std::span<uint8_t> &in, uint32_t &frameIndex
         t_dwt.cr_data.assign(0, decoded_data.begin(), decoded_data.end());
 
         DwtDecomposedTile t_decomposed{};
-        linearization_codec_->decode(t_decomposed, t_dwt);
-        quantization_codec_->decode(t_decomposed, {});
+        linearization_codec_->decode(t_decomposed.y, t_dwt.y_data);
+        linearization_codec_->decode(t_decomposed.cb, t_dwt.cb_data);
+        linearization_codec_->decode(t_decomposed.cr, t_dwt.cr_data);
+
+        quantization_codec_->decode(t_decomposed.y, {});
+        quantization_codec_->decode(t_decomposed.cb, {});
+        quantization_codec_->decode(t_decomposed.cr, {});
+
+        Tile_dwt t_dwt_dwt{};
+        dwt_codec_->decode(t_dwt_dwt.y_data, t_decomposed.y);
+        dwt_codec_->decode(t_dwt_dwt.cb_data, t_decomposed.cb);
+        dwt_codec_->decode(t_dwt_dwt.cr_data, t_decomposed.cr);
 
         Tile_rgb t_rgb{};
-        dwt_codec_->decode(t_rgb, t_decomposed);
+        tileDwtToRgb(t_rgb, t_dwt_dwt);
 
         t_rgb.xIdx = t.xIdx;
         t_rgb.yIdx = t.yIdx;
@@ -86,14 +105,13 @@ bool Rfx::decode(Bitmap &out, const std::span<uint8_t> &in, uint32_t &frameIndex
     }
 
     std::vector<uint32_t> rgb_data;
-    rgb_data.resize(width_ * height_);
     rebuildFrame(rgb_data, tiles_rgb);
     out.setRgbDate(rgb_data, width_, height_, 0, 32);
 
     return true;
 }
 
-void Rfx::SplitTiles(std::vector<Tile_rgb> & tiles, const std::span<const uint32_t>& rgb_data) const
+void Rfx::splitTiles(std::vector<Tile_rgb> & tiles, const std::span<const uint32_t>& rgb_data) const
 {
     uint32_t x_num = Alignment::AlignedFactor(width_, static_cast<decltype(width_)>(64));
     uint32_t y_num = Alignment::AlignedFactor(height_, static_cast<decltype(width_)>(64));
@@ -134,6 +152,8 @@ void Rfx::SplitTiles(std::vector<Tile_rgb> & tiles, const std::span<const uint32
 
 void Rfx::rebuildFrame(std::vector<uint32_t> &rgb_data, const std::vector<Tile_rgb> &tiles) const
 {
+    rgb_data.resize(width_ * height_);
+
     for(auto t:tiles)
     {
         uint32_t top_left_x = t.xIdx * 64;
@@ -148,11 +168,12 @@ void Rfx::rebuildFrame(std::vector<uint32_t> &rgb_data, const std::vector<Tile_r
                 uint32_t tile_index = tile_y * 64 + tile_x;
                 uint32_t data_index = data_y * width_ + data_x;
 
+                uint8_t a = 0xff;
                 uint8_t r = t.r_data[tile_index];
                 uint8_t g = t.g_data[tile_index];
                 uint8_t b = t.b_data[tile_index];
 
-                rgb_data[data_index] = (r << 16) + (g << 8) + b;
+                rgb_data[data_index] = (a << 24) + (r << 16) + (g << 8) + b;
             }
         }
     }
@@ -183,7 +204,7 @@ void Rfx::composeToStream(std::vector<uint8_t> &output, const std::vector<TileYC
     output.assign(stream.begin(), stream.end());
 }
 
-void Rfx::decomposeFromStream(std::vector<TileYCbCr> &output, const std::span<const uint8_t> input)
+void Rfx::decomposeFromStream(std::vector<TileYCbCr> &output, const std::span<const uint8_t> & input)
 {
     IStream is(input);
 

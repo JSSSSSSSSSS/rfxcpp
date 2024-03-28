@@ -27,12 +27,9 @@ class Dwt
 {
     using coefficient_type = int16_t;
 public:
-    void encodeTile(DwtDecomposedTile & output, const Tile_rgb & input);
-    void decode(Tile_rgb & output, const DwtDecomposedTile & input);
+    void encode(DwtSubBands & output, const DwtTileData & input);
+    void decode(DwtTileData & output, const DwtSubBands & input);
 private:
-    void encodePlane(DwtSubBands & output, const DwtTileData & input);
-    void decodePlane(DwtTileData & output, const DwtSubBands & input);
-
     template<uint32_t Size>
     void encode2DVertical(DwtVertical<Size> & out, const RectArray<coefficient_type ,2 * Size, 2 * Size> & in)
     {

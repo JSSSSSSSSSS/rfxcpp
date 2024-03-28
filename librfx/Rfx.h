@@ -29,19 +29,20 @@ public:
 public:
     bool encode(std::vector<uint8_t> & out, const Bitmap & in, uint32_t frameIndex);
     bool decode(Bitmap & out, const std::span<uint8_t> & in, uint32_t &frameIndex);
-private:
-    void SplitTiles(std::vector<Tile_rgb> & tiles, const std::span<const uint32_t>& rgb_data) const;
+
+protected:
+    void splitTiles(std::vector<Tile_rgb> & tiles, const std::span<const uint32_t>& rgb_data) const;
     void rebuildFrame(std::vector<uint32_t> & rgb_data, const std::vector<Tile_rgb> & tiles) const;
     static void composeToStream(std::vector<uint8_t> & output, const std::vector<TileYCbCr> & input);
-    static void decomposeFromStream(std::vector<TileYCbCr> & output, const std::span<const uint8_t> input);
+    static void decomposeFromStream(std::vector<TileYCbCr> & output, const std::span<const uint8_t> & input);
 
-    void SetPixFormat(uint32_t format)
+    void setPixFormat(uint32_t format)
     {
         pix_format_ = format;
         bit_per_pixel_ = 32;
     }
 
-    [[nodiscard]] uint32_t GetPixFormat() const
+    [[nodiscard]] uint32_t getPixFormat() const
     {
         return pix_format_;
     }

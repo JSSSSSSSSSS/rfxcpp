@@ -4,14 +4,7 @@
 
 #include "Linearization.h"
 
-void Linearization::encode(Tile_dwt &output, const DwtDecomposedTile &input)
-{
-    encodePlane(output.y_data, input.y);
-    encodePlane(output.cb_data, input.cb);
-    encodePlane(output.cr_data, input.cr);
-}
-
-void Linearization::encodePlane(DwtTileData & plane, const DwtSubBands & sub_bands)
+void Linearization::encode(DwtTileData & plane, const DwtSubBands & sub_bands)
 {
     size_t index = 0;
 
@@ -54,14 +47,7 @@ void Linearization::encodeDifferential(std::span<int16_t> coefficients, std::spa
     }
 }
 
-void Linearization::decode(DwtDecomposedTile &output, const Tile_dwt &input)
-{
-    decodePlane(output.y, input.y_data);
-    decodePlane(output.cb, input.cb_data);
-    decodePlane(output.cr, input.cr_data);
-}
-
-void Linearization::decodePlane(DwtSubBands &sub_bands, const DwtTileData & plane)
+void Linearization::decode(DwtSubBands &sub_bands, const DwtTileData & plane)
 {
     size_t index = 0;
     auto iter = plane.begin();

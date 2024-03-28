@@ -4,17 +4,7 @@
 
 #include "Dwt.h"
 
-void Dwt::encodeTile(DwtDecomposedTile & output, const Tile_rgb & input)
-{
-    Tile_dwt tileDwt{};
-    tileRgbToDwt(tileDwt, input);
-
-    encodePlane(output.y, tileDwt.y_data);
-    encodePlane(output.cb, tileDwt.cb_data);
-    encodePlane(output.cr, tileDwt.cr_data);
-}
-
-void Dwt::encodePlane(DwtSubBands & output, const DwtTileData & input)
+void Dwt::encode(DwtSubBands & output, const DwtTileData & input)
 {
     DwtTileData tileData;
 
@@ -50,17 +40,7 @@ void Dwt::encodePlane(DwtSubBands & output, const DwtTileData & input)
     output.LL3 = level_3_horizontal.LL;
 }
 
-void Dwt::decode(Tile_rgb &output, const DwtDecomposedTile &input)
-{
-    Tile_dwt t_dwt{};
-    decodePlane(t_dwt.y_data, input.y);
-    decodePlane(t_dwt.cb_data, input.cb);
-    decodePlane(t_dwt.cr_data, input.cr);
-
-    tileDwtToRgb(output, t_dwt);
-}
-
-void Dwt::decodePlane(DwtTileData &output, const DwtSubBands &input)
+void Dwt::decode(DwtTileData &output, const DwtSubBands &input)
 {
     DwtTileData tileData;
 
