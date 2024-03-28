@@ -1,1 +1,2 @@
 add_subdirectory(rlgrTest)
+add_subdirectory(RectArray)

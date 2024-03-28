@@ -11,12 +11,26 @@
 #include <cassert>
 #include <stdexcept>
 
-struct ViewRect
+template<typename T, size_t Size>
+class RectArrayRef
 {
-    uint32_t view_left;
-    uint32_t view_top;
-    uint32_t view_width;
-    uint32_t view_height;
+public:
+    T & operator[](size_t index)
+    {
+        return *array_.at(index);
+    }
+
+    T* & addressOf(size_t index)
+    {
+        return array_.at(index);
+    }
+
+    [[nodiscard]] constexpr size_t size() const
+    {
+        return Size;
+    }
+private:
+    std::array<T*, Size> array_;
 };
 
 template<typename T, size_t width, size_t height>
@@ -30,29 +44,6 @@ public:
     using size_type = size_t;
 
 public:
-    void verticalBisect(RectArray<T, half_width, height> & left, RectArray<T, half_width, height> & right) const
-    {
-        constexpr size_t half_size = half_width * height;
-
-        for(int i = 0; i < half_size; ++i)
-        {
-            size_t index_left = (i / half_width) * width + i % half_width;
-            size_t index_right = index_left + half_width;
-            left[i] = this->at(index_left);
-            right[i] = this->at(index_right);
-        }
-    }
-
-    void horizontalBisect(RectArray<T, width, half_height> & up, RectArray<T, width, half_height> & down) const
-    {
-        constexpr size_t half_size = width * half_height;
-        for(int i = 0; i < half_size; ++i)
-        {
-            up[i] = this->at(i);
-            down[i] = this->at(i + half_size);
-        }
-    }
-
     template<typename InputIterator,
             typename = std::_RequireInputIter<InputIterator>>
     void assign(size_t index, InputIterator first, InputIterator last)
@@ -71,31 +62,39 @@ public:
         }
     }
 
-    T getByPos(size_t x, size_t y) const
+    void row(RectArrayRef<T, width> &row_ref, size_t index)
     {
-        size_t index = y * width + x;
-        T value;
-        try
+        assert(index < height);
+        for(size_t i = 0; i < width; ++i)
         {
-            value = this->at(index);
+            row_ref.addressOf(i) = &(this->at(index * width + i));
         }
-        catch(std::out_of_range & e)
-        {
-            e.what();
-        }
-        return value;
     }
 
-    void setByPos(T value, size_t x, size_t y)
+    void row(RectArrayRef<const T, width> &row_ref, size_t index) const
     {
-        size_t index = y * width + x;
-        try
+        assert(index < height);
+        for(size_t i = 0; i < width; ++i)
         {
-            this->at(index) = value;
+            row_ref.addressOf(i) = &(this->at(index * width + i));
         }
-        catch(std::out_of_range & e)
+    }
+
+    void col(RectArrayRef<T, height> &col_ref, size_t index)
+    {
+        assert(index < width);
+        for(size_t i = 0; i < height; ++i)
         {
-            e.what();
+            col_ref.addressOf(i) = &(this->at(i * width + index));
+        }
+    }
+
+    void col(RectArrayRef<const T, height> &col_ref, size_t index) const
+    {
+        assert(index < width);
+        for(size_t i = 0; i < height; ++i)
+        {
+            col_ref.addressOf(i) = &(this->at(i * width + index));
         }
     }
 };
