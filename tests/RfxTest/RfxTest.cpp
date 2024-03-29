@@ -17,5 +17,10 @@ int main()
         std::cerr << "testTileSplitAndRebuildFrames failed! " << std::endl;
     }
 
+    if (!rfx_tester.testColorConvert(bmp))
+    {
+        std::cerr << "testColorConvert failed!" << std::endl;
+    }
+
     return 0;
 }
