@@ -1,0 +1,3 @@
+add_executable(TestLinearization LinearizationTest.cpp)
+
+target_link_libraries(TestLinearization rfx)

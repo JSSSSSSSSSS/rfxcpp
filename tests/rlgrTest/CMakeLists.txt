@@ -1,3 +1,3 @@
-add_executable(rlgrTest RlgrTest.cpp)
+add_executable(TestRlgr RlgrTest.cpp)
 
-target_link_libraries(rlgrTest  rfx)
+target_link_libraries(TestRlgr  rfx)

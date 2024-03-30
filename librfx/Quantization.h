@@ -9,8 +9,8 @@
 class Quantization
 {
 public:
-    void encode(DwtSubBands & sub_bands, std::span<const int> quantization_values);
-    void decode(DwtSubBands & sub_bands, std::span<const int> quantization_values);
+    static void encode(DwtSubBands & sub_bands, std::span<const int> quantization_values);
+    static void decode(DwtSubBands & sub_bands, std::span<const int> quantization_values);
 private:
     static void encodeSubBands(DwtSubBands & sub_bands, std::span<const int> quantization_values);
     static void decodeSubBands(DwtSubBands & sub_bands, std::span<const int> quantization_values);

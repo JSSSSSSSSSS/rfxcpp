@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <limits>
 
-static const std::array<int, 10> rfx_default_quantization_values =
+static const std::array<int, 10> g_rfx_default_quantization_values =
         { 6, 6, 6, 6, 7, 7, 8, 8, 8, 9 };
 
 void Quantization::encode(DwtSubBands & sub_bands, std::span<const int> quantization_values)
@@ -16,7 +16,7 @@ void Quantization::encode(DwtSubBands & sub_bands, std::span<const int> quantiza
     //          TS_RFX_TILE quantIdxY\quantIdxCb\quantIdxCr field.
 
     // Simply, we use one group quantization values in all tiles. And specifies quantIdxY\quantIdxCb\quantIdxCr 0.
-    encodeSubBands(sub_bands, rfx_default_quantization_values);
+    encodeSubBands(sub_bands, g_rfx_default_quantization_values);
 }
 
 void Quantization::decode(DwtSubBands & sub_bands, std::span<const int> quantization_values)
@@ -26,7 +26,7 @@ void Quantization::decode(DwtSubBands & sub_bands, std::span<const int> quantiza
     //          TS_RFX_TILE quantIdxY\quantIdxCb\quantIdxCr field.
 
     // Simply, we use one group quantization values in all tiles. And specifies quantIdxY\quantIdxCb\quantIdxCr 0.
-    decodeSubBands(sub_bands, rfx_default_quantization_values);
+    decodeSubBands(sub_bands, g_rfx_default_quantization_values);
 }
 
 void Quantization::encodeSubBands(DwtSubBands &sub_bands, std::span<const int> quantization_values)

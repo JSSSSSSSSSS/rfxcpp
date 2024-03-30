@@ -1,3 +1,3 @@
-add_executable(RfxTest RfxTest.cpp)
+add_executable(TestRfx RfxTest.cpp)
 
-target_link_libraries(RfxTest  rfx)
+target_link_libraries(TestRfx  rfx)

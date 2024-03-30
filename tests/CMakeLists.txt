@@ -1,3 +1,6 @@
 add_subdirectory(rlgrTest)
-add_subdirectory(RectArray)
+add_subdirectory(RectArrayTest)
 add_subdirectory(RfxTest)
+add_subdirectory(LinearizationTest)
+add_subdirectory(QuantizationTest)
+add_subdirectory(DwtTest)

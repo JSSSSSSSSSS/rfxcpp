@@ -1,0 +1,3 @@
+add_executable(TestQuantization QuantizationTest.cpp)
+
+target_link_libraries(TestQuantization rfx)

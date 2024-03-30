@@ -37,9 +37,7 @@ bool Rfx::encode(std::vector<uint8_t> &out, const Bitmap &in, uint32_t frameInde
         Tile_dwt t_dwt{};
         tileRgbToDwt(t_dwt, t);
 
-        dwt_codec_->encode(dwtDecomposedTile.y, t_dwt.y_data);
-        dwt_codec_->encode(dwtDecomposedTile.cb, t_dwt.cb_data);
-        dwt_codec_->encode(dwtDecomposedTile.cr, t_dwt.cr_data);
+        dwtEncode(dwtDecomposedTile, t_dwt);
 
         quantization_codec_->encode(dwtDecomposedTile.y, {});
         quantization_codec_->encode(dwtDecomposedTile.cb, {});
@@ -92,9 +90,7 @@ bool Rfx::decode(Bitmap &out, const std::span<uint8_t> &in, uint32_t &frameIndex
         quantization_codec_->decode(t_decomposed.cr, {});
 
         Tile_dwt t_dwt_dwt{};
-        dwt_codec_->decode(t_dwt_dwt.y_data, t_decomposed.y);
-        dwt_codec_->decode(t_dwt_dwt.cb_data, t_decomposed.cb);
-        dwt_codec_->decode(t_dwt_dwt.cr_data, t_decomposed.cr);
+        dwtDecode(t_dwt_dwt, t_decomposed);
 
         Tile_rgb t_rgb{};
         tileDwtToRgb(t_rgb, t_dwt_dwt);
@@ -135,15 +131,12 @@ void Rfx::splitTiles(std::vector<Tile_rgb> & tiles, const std::span<const uint32
                 {
                     uint32_t tile_index = tile_y * 64 + tile_x;
                     uint32_t data_index = data_y * width_ + data_x;
-                    ColorRGB rgb {rgb_data[data_index]};
-                    t.r_data[tile_index] = rgb.r();
-                    t.g_data[tile_index] = rgb.g();
-                    t.b_data[tile_index] = rgb.b();
+                    ColorARGB argb {rgb_data[data_index]};
+                    t.r_data[tile_index] = argb.r();
+                    t.g_data[tile_index] = argb.g();
+                    t.b_data[tile_index] = argb.b();
                 }
             }
-
-            t.width = right_bottom_x - top_left_x;
-            t.height = right_bottom_y - top_left_y;
 
             tiles.push_back(t);
         }
@@ -173,7 +166,7 @@ void Rfx::rebuildFrame(std::vector<uint32_t> &rgb_data, const std::vector<Tile_r
                 uint8_t g = t.g_data[tile_index];
                 uint8_t b = t.b_data[tile_index];
 
-                rgb_data[data_index] = (a << 24) + (r << 16) + (g << 8) + b;
+                rgb_data[data_index] = static_cast<uint32_t>(ColorARGB(a, r, g, b));
             }
         }
     }
@@ -237,4 +230,18 @@ void Rfx::decomposeFromStream(std::vector<TileYCbCr> &output, const std::span<co
 
         output.push_back(t_ycbcr);
     }
+}
+
+void Rfx::dwtEncode(DwtDecomposedTile & dwt_decomposed_tile, const Tile_dwt &tile_dwt)
+{
+    dwt_codec_->encode(dwt_decomposed_tile.y, tile_dwt.y_data);
+    dwt_codec_->encode(dwt_decomposed_tile.cb, tile_dwt.cb_data);
+    dwt_codec_->encode(dwt_decomposed_tile.cr, tile_dwt.cr_data);
+}
+
+void Rfx::dwtDecode(Tile_dwt &tile_dwt, const DwtDecomposedTile &dwt_decomposed_tile)
+{
+    dwt_codec_->decode(tile_dwt.y_data, dwt_decomposed_tile.y);
+    dwt_codec_->decode(tile_dwt.cb_data, dwt_decomposed_tile.cb);
+    dwt_codec_->decode(tile_dwt.cr_data, dwt_decomposed_tile.cr);
 }

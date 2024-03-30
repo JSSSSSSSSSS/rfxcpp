@@ -19,8 +19,6 @@ struct Tile_rgb
 {
     uint16_t xIdx;
     uint16_t yIdx;
-    uint16_t width;
-    uint16_t height;
     RgbTileData r_data;
     RgbTileData g_data;
     RgbTileData b_data;
@@ -29,9 +27,8 @@ struct Tile_rgb
 using DwtTileData = RectArray<int16_t, tile_width, tile_height>;
 struct Tile_dwt
 {
-    uint32_t num;
-    uint16_t width;
-    uint16_t height;
+    uint16_t xIdx;
+    uint16_t yIdx;
     DwtTileData y_data;
     DwtTileData cb_data;
     DwtTileData cr_data;
@@ -63,7 +60,8 @@ struct DwtSubBands
 
 struct DwtDecomposedTile
 {
-    uint32_t num;
+    uint16_t xIdx;
+    uint16_t yIdx;
     DwtSubBands y;
     DwtSubBands cb;
     DwtSubBands cr;

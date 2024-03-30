@@ -88,6 +88,6 @@ void Linearization::decodeDifferential(std::span<int16_t> coefficients, std::spa
 
     for(int i = 1; i < input.size(); ++i)
     {
-        coefficients[i] = static_cast<int16_t>(input[i] + input[i - 1]);
+        coefficients[i] = static_cast<int16_t>(input[i] + coefficients[i - 1]);
     }
 }

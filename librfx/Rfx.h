@@ -35,6 +35,8 @@ protected:
     void rebuildFrame(std::vector<uint32_t> & rgb_data, const std::vector<Tile_rgb> & tiles) const;
     static void composeToStream(std::vector<uint8_t> & output, const std::vector<TileYCbCr> & input);
     static void decomposeFromStream(std::vector<TileYCbCr> & output, const std::span<const uint8_t> & input);
+    void dwtEncode(DwtDecomposedTile & dwt_decomposed_tile, const Tile_dwt & tile_dwt);
+    void dwtDecode(Tile_dwt & tile_dwt, const DwtDecomposedTile & dwt_decomposed_tile);
 
     void setPixFormat(uint32_t format)
     {

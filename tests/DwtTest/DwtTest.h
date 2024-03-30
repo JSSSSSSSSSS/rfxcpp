@@ -1,49 +1,26 @@
 //
-// Created by Administrator on 2024/3/29.
+// Created by Administrator on 2024/3/31.
 //
 
-#ifndef RFXCPP_RFXTEST_H
-#define RFXCPP_RFXTEST_H
+#ifndef RFXCPP_DWTTEST_H
+#define RFXCPP_DWTTEST_H
 #include <Rfx.h>
-#include <iostream>
 #include <unordered_map>
+#include <iostream>
 
-class RfxTest:public Rfx
+class DwtTest:public Rfx
 {
 public:
-    RfxTest(uint32_t width, uint32_t height, uint32_t bpp)
+    DwtTest(uint32_t width, uint32_t height, uint32_t bpp)
     :Rfx(width, height, bpp)
     {}
 
-    bool testTileSplitAndRebuildFrames(const Bitmap &in)
+    bool testDwt(const Bitmap & bmp)
     {
-        bool ret = true;
+        bool ret  = true;
+
         std::vector<Tile_rgb> tiles_rgb;
-        auto raw_rgb_data = in.getRgbData();
-
-        splitTiles(tiles_rgb, raw_rgb_data);
-
-        std::vector<uint32_t> rgb_data;
-        rebuildFrame(rgb_data, tiles_rgb);
-
-        for(auto i = 0; i < rgb_data.size(); ++i)
-        {
-            if (rgb_data[i] != raw_rgb_data[i])
-            {
-                std::cerr << "difference rgb data at index " << i << std::endl;
-                ret = false;
-                break;
-            }
-        }
-
-        return ret;
-    }
-
-    bool testColorConvert(const Bitmap & in)
-    {
-        bool ret = true;
-        std::vector<Tile_rgb> tiles_rgb;
-        auto raw_rgb_data = in.getRgbData();
+        auto raw_rgb_data = bmp.getRgbData();
 
         splitTiles(tiles_rgb, raw_rgb_data);
 
@@ -61,8 +38,13 @@ public:
         std::vector<Tile_rgb> decode_rgbs;
         for(auto t:tiles_dwt)
         {
+            DwtDecomposedTile dwt_decomposed_tile{};
+            dwtEncode(dwt_decomposed_tile, t);
+
+            Tile_dwt t_dwt{};
+            dwtDecode(t_dwt, dwt_decomposed_tile);
             Tile_rgb decode_rgb{};
-            tileDwtToRgb(decode_rgb, t);
+            tileDwtToRgb(decode_rgb, t_dwt);
             decode_rgb.xIdx = t.xIdx;
             decode_rgb.yIdx = t.yIdx;
             decode_rgbs.push_back(decode_rgb);
@@ -118,7 +100,7 @@ public:
         rebuildFrame(decode_data, decode_rgbs);
 
         Bitmap out;
-        out.setRgbDate(decode_data, in.getWidth(), in.getHeight(), 0, in.getBytesPerPixel() * 8);
+        out.setRgbDate(decode_data, bmp.getWidth(), bmp.getHeight(), 0, bmp.getBytesPerPixel() * 8);
         out.dump("test_decoded.bmp");
 
         return ret;
@@ -126,4 +108,4 @@ public:
 };
 
 
-#endif //RFXCPP_RFXTEST_H
+#endif //RFXCPP_DWTTEST_H

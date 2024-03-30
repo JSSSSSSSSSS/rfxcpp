@@ -7,18 +7,26 @@
 #include <span>
 #include <cstdint>
 
-struct ColorYUV
+struct ColorARGB
 {
-    int8_t y;
-    int8_t u;
-    int8_t v;
-};
-
-struct ColorRGB
-{
-    explicit ColorRGB(uint32_t rgb)
+    explicit ColorARGB(uint32_t rgb)
     : rgb_(rgb)
     {
+    }
+
+    ColorARGB(uint8_t a, uint8_t r, uint8_t g, uint8_t b)
+            : rgb_((a << 24) + (r << 16) + (g << 8) + b)
+    {
+    }
+
+    explicit operator uint32_t() const
+    {
+        return rgb_;
+    }
+
+    [[nodiscard]] uint8_t a() const
+    {
+        return (rgb_ >> 24) & 0xFF;
     }
 
     [[nodiscard]] uint8_t r() const
@@ -38,15 +46,6 @@ struct ColorRGB
 
 private:
     uint32_t rgb_;
-};
-
-class Color
-{
-public:
-    enum color{ARGB, XRGB, RGB, BGRA, BGRX, BGR};
-public:
-    static ColorYUV RGBtoYUV(ColorRGB rgb);
-
 };
 
 

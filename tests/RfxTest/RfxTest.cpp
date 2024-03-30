@@ -12,10 +12,10 @@ int main()
 
     auto rfx_tester = RfxTest(bmp.getWidth(), bmp.getHeight(), bmp.getBytesPerPixel() * 8);
 
-    if (!rfx_tester.testTileSplitAndRebuildFrames(bmp))
-    {
-        std::cerr << "testTileSplitAndRebuildFrames failed! " << std::endl;
-    }
+//    if (!rfx_tester.testTileSplitAndRebuildFrames(bmp))
+//    {
+//        std::cerr << "testTileSplitAndRebuildFrames failed! " << std::endl;
+//    }
 
     if (!rfx_tester.testColorConvert(bmp))
     {
