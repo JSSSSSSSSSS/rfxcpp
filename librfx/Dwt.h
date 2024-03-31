@@ -41,7 +41,7 @@ private:
 
         // vertical filtering, for each col, generator two sub-bands.
         constexpr size_t width = 2 * SIZE;
-        for(int x_index = 0; x_index < width; ++x_index)
+        for(size_t x_index = 0; x_index < width; ++x_index)
         {
             ConstCoefficientRef<2 * SIZE> X{};
             in.col(X, x_index);
@@ -55,19 +55,18 @@ private:
             H[0] = (X[1] - ((X[0] + X[2]) >> 1 )) >> 1;
             L[0] = X[0] + H[0];
 
-            int n = 1;
-            int y = n << 1;
+            size_t n = 1;
             for(n = 1; n < SIZE - 1; ++n)
             {
-                y = n << 1;
-                H[n] = (X[y + 1] - ((X[y] + X[y + 2]) >> 1)) >> 1;
-                L[n] = X[y] + ((H[n - 1] + H[n]) >> 1);
+                size_t _2N = n << 1;
+                H[n] = (X[_2N + 1] - ((X[_2N] + X[_2N + 2]) >> 1)) >> 1;
+                L[n] = X[_2N] + ((H[n - 1] + H[n]) >> 1);
             }
 
             // right boundary
-            y = n << 1;
-            H[n] = (X[y + 1] - ((X[y] + X[y]) >> 1)) >> 1;
-            L[n] = X[y] + ((H[n - 1] + H[n]) >> 1);
+            size_t _2N = n << 1;
+            H[n] = (X[_2N + 1] - ((X[_2N] + X[_2N]) >> 1)) >> 1;
+            L[n] = X[_2N] + ((H[n - 1] + H[n]) >> 1);
         }
     }
 
@@ -102,25 +101,24 @@ private:
             HH[0] = (H[1] - ((H[0] + H[2]) >> 1)) >> 1;;
             LH[0] = H[0] + HH[0];
 
-            int x = 0;
-            int n = 1;
+            size_t n = 1;
             for(n = 1; n < SIZE - 1; ++n)
             {
-                x = n << 1;
-                HL[n] = (L[x + 1] - ((L[x] + L[x + 2]) >> 1)) >> 1;
-                LL[n] = L[x] + ((HL[n - 1] + HL[n]) >> 1);
+                size_t _2N = n << 1;
+                HL[n] = (L[_2N + 1] - ((L[_2N] + L[_2N + 2]) >> 1)) >> 1;
+                LL[n] = L[_2N] + ((HL[n - 1] + HL[n]) >> 1);
 
-                HH[n] = (H[x + 1] - ((H[x] + H[x + 2]) >> 1)) >> 1;
-                LH[n] = H[x] + ((HH[n - 1] + HH[n]) >> 1);
+                HH[n] = (H[_2N + 1] - ((H[_2N] + H[_2N + 2]) >> 1)) >> 1;
+                LH[n] = H[_2N] + ((HH[n - 1] + HH[n]) >> 1);
             }
 
             // right boundary, n = SIZE - 1
-            x = n << 1;
-            HL[n] = (L[x + 1] - ((L[x] + L[x]) >> 1)) >> 1;
-            LL[n] = L[x] + ((HL[n - 1] + HL[n]) >> 1);
+            size_t _2N = n << 1;
+            HL[n] = (L[_2N + 1] - ((L[_2N] + L[_2N]) >> 1)) >> 1;
+            LL[n] = L[_2N] + ((HL[n - 1] + HL[n]) >> 1);
 
-            HH[n] = (H[x + 1] - ((H[x] + H[x]) >> 1)) >> 1;
-            LH[n] = H[x] + ((HH[n - 1] + HH[n]) >> 1);
+            HH[n] = (H[_2N + 1] - ((H[_2N] + H[_2N]) >> 1)) >> 1;
+            LH[n] = H[_2N] + ((HH[n - 1] + HH[n]) >> 1);
         }
     }
 
@@ -142,21 +140,23 @@ private:
             out.col(X, x_index);
 
             // left boundary
-            X[0] = L[0] - ((H[0] * 2 + 1) >> 1);
+            /* Even coefficients */
+            X[0] = L[0] - ((H[1] + H[0] + 1) >> 1);
 
             for(size_t n = 1; n < SIZE; ++n)
             {
-                const size_t y = n << 1;
+                const size_t _2N = n << 1;
                 /* Even coefficients */
-                X[y] = L[n] - ((H[n - 1] + H[n] + 1) >> 1);
+                X[_2N] = L[n] - ((H[n - 1] + H[n] + 1) >> 1);
 
                 /* Odd coefficients */
-                X[y - 1] = (H[n] << 1) + ((X[y - 2] + X[y]) >> 1);
+                X[_2N - 1] = (H[n - 1] << 1) + ((X[_2N - 2] + X[_2N]) >> 1);
             }
 
-            // right boundary
-            size_t y = SIZE << 1;
-            X[y - 1] = (H[SIZE - 2] << 1) + ((X[y - 2] * 2) >> 1);
+            // right boundary, n = SIZE
+            /* Odd coefficients */
+            size_t _2N = SIZE << 1;
+            X[_2N - 1] = (H[SIZE - 1] << 1) + (X[_2N - 2]);
         }
     }
 
@@ -185,29 +185,30 @@ private:
 
             // Even coefficients
             // left boundary, n = 0
-            L[0] = LL[0] - ((HL[0] + HL[0] + 1) >> 1);
-            H[0] = LH[0] - ((HH[0] + HH[0] + 1) >> 1);
+            L[0] = LL[0] - ((HL[1] + HL[0] + 1) >> 1);
+            H[0] = LH[0] - ((HH[1] + HH[0] + 1) >> 1);
 
             for(size_t n = 1; n < SIZE; ++n)
             {
-                const size_t x = n << 1;
-                L[x] = LL[n] - ((HL[n - 1] + HL[n] + 1) >> 1);
-                H[x] = LH[n] - ((HH[n - 1] + HH[n] + 1) >> 1);
+                const size_t _2N = n << 1;
+                L[_2N] = LL[n] - ((HL[n - 1] + HL[n] + 1) >> 1);
+                H[_2N] = LH[n] - ((HH[n - 1] + HH[n] + 1) >> 1);
             }
 
             /* Odd coefficients */
             size_t n = 0;
             for (n = 0; n < SIZE - 1; n++)
             {
-                const size_t x = n << 1;
-                L[x + 1] = (HL[n] << 1) + ((L[x] + L[x + 2]) >> 1);
-                H[x + 1] = (HH[n] << 1) + ((H[x] + H[x + 2]) >> 1);
+                const size_t _2N = n << 1;
+                L[_2N + 1] = (HL[n] << 1) + ((L[_2N] + L[_2N + 2]) >> 1);
+                H[_2N + 1] = (HH[n] << 1) + ((H[_2N] + H[_2N + 2]) >> 1);
             }
 
+            // Odd coefficients
             // right boundary, n = SIZE - 1
-            const size_t x = n << 1;
-            L[x + 1] = (HL[n] << 1) + (L[x]);
-            H[x + 1] = (HH[n] << 1) + (H[x]);
+            const size_t _2N = n << 1;
+            L[_2N + 1] = (HL[n] << 1) + (L[_2N]);
+            H[_2N + 1] = (HH[n] << 1) + (H[_2N]);
         }
     }
 };
