@@ -160,6 +160,7 @@ public:
     size_t write(const RNG & v) requires std::is_same_v<uint8_t, std::ranges::range_value_t<RNG>>
     {
         size_t size = v.size();
+        ensureRemain(size);
         iter_ = data_.insert(iter_, v.begin(), v.end());
         iter_+= static_cast<long long>(size);
         return size;
